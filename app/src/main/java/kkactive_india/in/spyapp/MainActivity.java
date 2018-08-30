@@ -7,6 +7,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
@@ -22,6 +23,7 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textView = (TextView)findViewById(R.id.textview);
+        textView = (TextView) findViewById(R.id.textview);
 
         TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -53,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("HardwareIds") String imeiNumber1 = tm.getDeviceId(1); //(API level 23)
         @SuppressLint("HardwareIds") String imeiNumber2 = tm.getDeviceId(2);
 
-        Log.d("IMEI1",imeiNumber1);
-        Log.d("IMEI2",imeiNumber2);
+        Log.d("IMEI1", imeiNumber1);
+        Log.d("IMEI2", imeiNumber2);
 
         @SuppressLint("HardwareIds") String number = tm.getLine1Number();
         Log.d("numner", number);
@@ -73,42 +75,43 @@ public class MainActivity extends AppCompatActivity {
 
 
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS},
+                new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                 1);
-       // String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
+        // String strOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
+        String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
         StringBuffer sb = new StringBuffer();
-        Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,null,null, null);
+        Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         sb.append("Contact Details :");
-        while (phones.moveToNext())
-        {
-            String name=phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+        while (phones.moveToNext()) {
+            String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
             //Toast.makeText(getApplicationContext(),name, Toast.LENGTH_LONG).show();
 
-            Log.d("names",name);
+            Log.d("names", name);
             Log.d("Phones", phoneNumber);
             //textView.setText("\n Name:" + name +"\nNumber:" + phoneNumber );
 
-            sb.append("\nPhone Number:--- " + phoneNumber + " \nCall Type:--- " + name);
+            sb.append(" \nName:--- " + name + "\nPhone Number:--- " + phoneNumber);
             sb.append("\n----------------------------------");
 
 
         }
         phones.close();
-       // textView.setText(sb);
+        textView.setText(sb);
+
+
         //callLogs();
 
-        getAllSms();
-
+        // getSMS();
 
 
     }
 
-    public void callLogs(){
+    public void callLogs() {
 
 
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG,Manifest.permission.WRITE_CALL_LOG},
+                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_CALL_LOG},
                 2);
         StringBuffer sb = new StringBuffer();
         String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
@@ -129,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             String callDuration = managedCursor.getString(duration);
             String dir = null;
 
-           // Log.d("NameKyaHai",pName);
+            // Log.d("NameKyaHai",pName);
             int dircode = Integer.parseInt(callType);
             switch (dircode) {
                 case CallLog.Calls.OUTGOING_TYPE:
@@ -148,55 +151,53 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
         }
         managedCursor.close();
-       // textView.setText(sb);
+        // textView.setText(sb);
         Log.e("Agil value --- ", sb.toString());
 
 
     }
 
 
-    public void getAllSms(){
-       // ContentResolver cr = context.getContentResolver();
-        Cursor c = getContentResolver().query(Telephony.Sms.CONTENT_URI, null, null, null, null);
-        int totalSMS = 0;
-        if (c != null) {
-            totalSMS = c.getCount();
-            if (c.moveToFirst()) {
-                for (int j = 0; j < totalSMS; j++) {
-                    String smsDate = c.getString(c.getColumnIndexOrThrow(Telephony.Sms.DATE));
-                    String number = c.getString(c.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
-                    String body = c.getString(c.getColumnIndexOrThrow(Telephony.Sms.BODY));
-                    Date dateFormat= new Date(Long.valueOf(smsDate));
-                    String type;
-                    switch (Integer.parseInt(c.getString(c.getColumnIndexOrThrow(Telephony.Sms.TYPE)))) {
-                        case Telephony.Sms.MESSAGE_TYPE_INBOX:
-                            type = "inbox";
-                            break;
-                        case Telephony.Sms.MESSAGE_TYPE_SENT:
-                            type = "sent";
-                            break;
-                        case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
-                            type = "outbox";
-                            break;
-                        default:
-                            break;
-                    }
+    public List<String> getSMS() {
+        List<String> sms = new ArrayList<String>();
+        Uri uriSMSURI = Uri.parse("content://sms");
+        StringBuffer sb = new StringBuffer();
+        String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
+        Cursor cur = getContentResolver().query(uriSMSURI, null, null, null, strOrder);
 
-                   // Log.d("nnn",number);
-                   // Log.d("bbb",body);
-
-
-
-                    c.moveToNext();
-                }
+        sb.append("SMS Details :");
+        while (cur != null && cur.moveToNext()) {
+            String name = cur.getString(cur.getColumnIndexOrThrow("_id"));
+            String address = cur.getString(cur.getColumnIndex("address"));
+            String body = cur.getString(cur.getColumnIndexOrThrow("body"));
+            String date = cur.getString(cur.getColumnIndexOrThrow("date"));
+            Date dateFormat = new Date(Long.valueOf(date));
+            String type = null;
+            switch (Integer.parseInt(cur.getString(cur.getColumnIndexOrThrow(Telephony.Sms.TYPE)))) {
+                case Telephony.Sms.MESSAGE_TYPE_INBOX:
+                    type = "inbox";
+                    break;
+                case Telephony.Sms.MESSAGE_TYPE_SENT:
+                    type = "sent";
+                    break;
+                case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
+                    type = "outbox";
+                    break;
+                default:
+                    break;
             }
+            sms.add("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
 
-            c.close();
-
-        } else {
-            Toast.makeText(this, "No message to show!", Toast.LENGTH_SHORT).show();
+            sb.append("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
+            sb.append("\n-----------------");
         }
-    }
+        Log.d("SMSS", sms.toString());
+        textView.setText(sb);
 
+        if (cur != null) {
+            cur.close();
+        }
+        return sms;
+    }
 
 }
