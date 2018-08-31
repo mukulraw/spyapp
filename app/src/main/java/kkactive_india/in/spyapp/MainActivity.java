@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        ActivityCompat.requestPermissions(MainActivity.this,
+      /*  ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                 1);
         // String strOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
@@ -97,12 +97,12 @@ public class MainActivity extends AppCompatActivity {
 
         }
         phones.close();
-        textView.setText(sb);
+        textView.setText(sb);*/
 
 
-        //callLogs();
+       // callLogs();
 
-        // getSMS();
+         getSMS();
 
 
     }
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
         }
         managedCursor.close();
-        // textView.setText(sb);
+         textView.setText(sb);
         Log.e("Agil value --- ", sb.toString());
 
 
