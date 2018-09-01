@@ -7,8 +7,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Browser;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
@@ -23,9 +26,13 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,6 +67,45 @@ public class MainActivity extends AppCompatActivity {
 
         @SuppressLint("HardwareIds") String number = tm.getLine1Number();
         Log.d("numner", number);
+
+
+        EasyLocationMod easyLocationMod = new EasyLocationMod(MainActivity.this);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        double[] l = easyLocationMod.getLatLong();
+        String lat = String.valueOf(l[0]);
+        String lon = String.valueOf(l[1]);
+
+        Log.d("lat",lat);
+        Log.d("lon", lon);
+
+
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> listAdresses = geocoder.getFromLocation(Double.parseDouble(lat), Double.parseDouble(lon), 1);
+            if (null != listAdresses && listAdresses.size() > 0) {
+                String address = listAdresses.get(0).getAddressLine(0);
+                String state = listAdresses.get(0).getAdminArea();
+                String country = listAdresses.get(0).getCountryName();
+                String subLocality = listAdresses.get(0).getSubLocality();
+
+                Log.d("Adsress", address);
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
         SubscriptionManager subscriptionManager = SubscriptionManager.from(getApplicationContext());
         List<SubscriptionInfo> subsInfoList = subscriptionManager.getActiveSubscriptionInfoList();
@@ -100,12 +146,15 @@ public class MainActivity extends AppCompatActivity {
         textView.setText(sb);*/
 
 
-       // callLogs();
+        // callLogs();
 
-         getSMS();
+       // getSMS();
+        
 
 
     }
+
+
 
     public void callLogs() {
 
@@ -151,11 +200,12 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
         }
         managedCursor.close();
-         textView.setText(sb);
+        textView.setText(sb);
         Log.e("Agil value --- ", sb.toString());
 
 
     }
+
 
 
     public List<String> getSMS() {
