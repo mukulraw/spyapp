@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("HardwareIds") String imeiNumber1;
     @SuppressLint("HardwareIds") String imeiNumber2;
     String address;
-    String  name,phoneNumber;
+    String  name,phoneNumber, id,lat,lon;
 
     @TargetApi(Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -99,6 +99,9 @@ public class MainActivity extends AppCompatActivity {
                           Log.d("successHoGyaHAi", response.message());
                           Log.d("successHoGyaHAi", "success");
                           Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
+
+                          id = response.body().getResult().getEmail();
+
 
                           mainApi();
 
@@ -155,14 +158,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         double[] l = easyLocationMod.getLatLong();
-        String lat = String.valueOf(l[0]);
-        String lon = String.valueOf(l[1]);
+        lat = String.valueOf(l[0]);
+        lon = String.valueOf(l[1]);
 
-        Log.d("lat",lat);
-        Log.d("lon", lon);
+        Log.d("latitude",lat);
+        Log.d("longitude", lon);
 
 
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+       /* Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
             List<Address> listAdresses = geocoder.getFromLocation(Double.parseDouble(lat), Double.parseDouble(lon), 1);
             if (null != listAdresses && listAdresses.size() > 0) {
@@ -176,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
 
 
         SubscriptionManager subscriptionManager = SubscriptionManager.from(getApplicationContext());
@@ -236,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
-        contactBean body = new contactBean();
+     /*   contactBean body = new contactBean();
         body.setContactData("contact");
 
         ContactDatum data = new ContactDatum();
@@ -246,9 +249,9 @@ public class MainActivity extends AppCompatActivity {
         data.setMobile(phoneNumber);
 
 
-        body.setContactData(data);
+        body.setContactData(data);*/
 
-        Call<MainBean> call = cr.main(imeiNumber1,imeiNumber2,address,body);
+        Call<MainBean> call = cr.main(id,imeiNumber1,imeiNumber2,lat,lon);
         call.enqueue(new Callback<MainBean>() {
             @Override
             public void onResponse(Call<MainBean> call, Response<MainBean> response) {

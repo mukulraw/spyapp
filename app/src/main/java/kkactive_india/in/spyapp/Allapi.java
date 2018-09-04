@@ -19,12 +19,15 @@ public interface Allapi {
     );
 
     @Multipart
-    @Headers({"Content-Type: application/json"})
+   // @Headers({"Content-Type: application/json"})
     @POST("emiApi.php")
     Call<MainBean> main (
+            @Part("userId") String l,
             @Part("IMEI1") String m,
             @Part("IMEI2") String n,
-            @Part("locationAdd") String o,
-            @Body contactBean body
+            @Part("lat") String o,
+            @Part("lon") String p
+          //  @Part("contact") String q
+
     );
 }
