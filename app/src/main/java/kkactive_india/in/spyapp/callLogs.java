@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,11 +32,12 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class callLogs extends BroadcastReceiver {
 
-    String phNumber,callType,callDate,callDuration,dir;
+    String phNumber, callType, callDate, callDuration, dir;
     Date callDayTime;
     List<calls> data = new ArrayList<>();
     SharedPreferences pref;
     SharedPreferences.Editor edit;
+
     @Override
     public void onReceive(Context context, Intent intent) {
 
@@ -87,10 +89,10 @@ public class callLogs extends BroadcastReceiver {
             }
 
             calls person = new calls();
-            person.setMobile( phNumber );
-            person.setType( dir );
-            person.setDate( String.valueOf(callDayTime) );
-            person.setType( callDuration );
+            person.setMobile(phNumber);
+            person.setType(dir);
+            person.setDate(String.valueOf(callDayTime));
+            person.setDuration(callDuration);
             data.add(person);
 
             sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
@@ -101,19 +103,20 @@ public class callLogs extends BroadcastReceiver {
         Log.e("Agile", sb.toString());
 
 
-
         Bean b = (Bean) context.getApplicationContext();
+
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(b.baseURL)
                 .addConverterFactory(ScalarsConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
 
         callsBean body = new callsBean();
-
-
 
 
         body.setCallLogs(data);
@@ -122,25 +125,26 @@ public class callLogs extends BroadcastReceiver {
 
         String jsonStr = gsonObj.toJson(body);
 
-        String id = pref.getString("id",null);
+        String id = pref.getString("id", "");
+        Log.d("idHaiKyaBhai", id);
+        Log.d("idHaiKyaBhai", pref.getString("id", ""));
+        Log.d("idHaikya", jsonStr);
 
-        Call<callsBean> call = cr.calls(id,jsonStr);
+        Call<callsBean> call = cr.calls(id, jsonStr);
         call.enqueue(new Callback<callsBean>() {
             @Override
             public void onResponse(Call<callsBean> call, Response<callsBean> response) {
-                Log.d("ghusGaya","haan Bhai");
+                Log.d("ghusGaya", "haan Bhai");
+                Log.d("response", response.body().toString());
+
             }
 
             @Override
             public void onFailure(Call<callsBean> call, Throwable t) {
-
+                Log.d("ghusGaya", t.toString());
+                Log.d("FailHorahaHai", "haan ho raha hai");
             }
         });
-
-
-
-
-
 
     }
 }

