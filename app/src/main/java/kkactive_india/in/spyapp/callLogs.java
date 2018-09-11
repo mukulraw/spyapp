@@ -54,15 +54,14 @@ public class callLogs extends BroadcastReceiver {
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
         edit = pref.edit();
 
-         callsData = Room.databaseBuilder(context.getApplicationContext(),
+        callsData = Room.databaseBuilder(context.getApplicationContext(),
                 callsData.class, DATABASE_NAME).fallbackToDestructiveMigration().build();
 
 
-       // cd = new ConnectionDetector(context.getApplicationContext());
+        // cd = new ConnectionDetector(context.getApplicationContext());
 
 
-
-        CountDownTimer countDownTimer = new CountDownTimer(500 , 1000) {
+        CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override
             public void onTick(long l) {
 
@@ -95,39 +94,38 @@ public class callLogs extends BroadcastReceiver {
 
                 managedCursor.moveToFirst();
 
-               // while (managedCursor.moveToNext()) {
+                // while (managedCursor.moveToNext()) {
 
-                    String pName = managedCursor.getString(name);
-                    phNumber = managedCursor.getString(number); // mobile number
-                    callType = managedCursor.getString(type); // call type
-                    callDate = managedCursor.getString(date); // call date
-                    callDayTime = new Date(Long.valueOf(callDate));
-                    callDuration = managedCursor.getString(duration);
-                    dir = null;
+                String pName = managedCursor.getString(name);
+                phNumber = managedCursor.getString(number); // mobile number
+                callType = managedCursor.getString(type); // call type
+                callDate = managedCursor.getString(date); // call date
+                callDayTime = new Date(Long.valueOf(callDate));
+                callDuration = managedCursor.getString(duration);
+                dir = null;
 
-                    // Log.d("NameKyaHai",pName);
-                    int dircode = Integer.parseInt(callType);
-                    switch (dircode) {
-                        case CallLog.Calls.OUTGOING_TYPE:
-                            dir = "OUTGOING";
-                            break;
+                // Log.d("NameKyaHai",pName);
+                int dircode = Integer.parseInt(callType);
+                switch (dircode) {
+                    case CallLog.Calls.OUTGOING_TYPE:
+                        dir = "OUTGOING";
+                        break;
 
-                        case CallLog.Calls.INCOMING_TYPE:
-                            dir = "INCOMING";
-                            break;
+                    case CallLog.Calls.INCOMING_TYPE:
+                        dir = "INCOMING";
+                        break;
 
-                        case CallLog.Calls.MISSED_TYPE:
-                            dir = "MISSED";
-                            break;
+                    case CallLog.Calls.MISSED_TYPE:
+                        dir = "MISSED";
+                        break;
 
-                        case CallLog.Calls.REJECTED_TYPE:
-                            dir = "REJECTED";
-                            break;
-                    }
+                    case CallLog.Calls.REJECTED_TYPE:
+                        dir = "REJECTED";
+                        break;
+                }
 
 
-
-                new  Thread(new Runnable() {
+                new Thread(new Runnable() {
                     @Override
                     public void run() {
                         callsDb = new callsDb();
@@ -142,27 +140,24 @@ public class callLogs extends BroadcastReceiver {
                 }).start();
 
 
-
-                    sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
-                    sb.append("\n----------------------------------");
-               // }
+                sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
+                sb.append("\n----------------------------------");
+                // }
                 managedCursor.close();
                 // textView.setText(sb);
                 Log.d("Agile", sb.toString());
 
 
+                Log.d("dataHaiBhai", callsDb.getPhone());
+                Log.d("type kya hai", callsDb.getType());
 
-              Log.d("dataHaiBhai",callsDb.getPhone());
-              Log.d("type kya hai",callsDb.getType());
 
-
-              calls person = new calls();
-              person.setMobile(callsDb.getPhone());
-              person.setType(callsDb.getType());
-              
-              person.setDate(callsDb.getDate());
-              person.setDuration(callsDb.getDuration());
-              data.add(person);
+                calls person = new calls();
+                person.setMobile(callsDb.getPhone());
+                person.setType(callsDb.getType());
+                person.setDate(callsDb.getDate());
+                person.setDuration(callsDb.getDuration());
+                data.add(person);
 
 
                 Bean b = (Bean) context.getApplicationContext();
@@ -221,4 +216,5 @@ public class callLogs extends BroadcastReceiver {
         countDownTimer.start();
 
     }
+
 }
