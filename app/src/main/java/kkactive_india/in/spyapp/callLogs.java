@@ -12,6 +12,8 @@ import android.database.Cursor;
 import android.os.CountDownTimer;
 import android.provider.CallLog;
 import android.support.v4.app.ActivityCompat;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -48,8 +50,20 @@ public class callLogs extends BroadcastReceiver {
     private callsDb callsDb;
     private static final String DATABASE_NAME = "callsData";
 
+
+    static PhonecallStartEndDetector listener;
+    String outgoingSavedNumber;
+    protected Context savedContext;
+
     @Override
     public void onReceive(final Context context, Intent intent) {
+        savedContext = context;
+        if(listener == null){
+            listener = new PhonecallStartEndDetector();
+        }
+
+        TelephonyManager telephony = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+        telephony.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
 
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
         edit = pref.edit();
@@ -152,14 +166,13 @@ public class callLogs extends BroadcastReceiver {
                 Log.d("type kya hai", callsDb.getType());
 
 
-                calls person = new calls();
+
+            /*    calls person = new calls();
                 person.setMobile(callsDb.getPhone());
                 person.setType(callsDb.getType());
                 person.setDate(callsDb.getDate());
                 person.setDuration(callsDb.getDuration());
                 data.add(person);
-
-
                 Bean b = (Bean) context.getApplicationContext();
 
                 Gson gson = new GsonBuilder()
@@ -193,12 +206,12 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("kyaBaatHai", "sahi baat hai");
                         Log.d("response", response.body().getCallLogs().toString());
 
-                        /*new  Thread(new Runnable() {
+                        *//*new  Thread(new Runnable() {
                             @Override
                             public void run() {
                         callsData.callsDao().delete(callsDb);
                             }
-                        }).start();*/
+                        }).start();*//*
 
                     }
 
@@ -207,7 +220,7 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("ghusGaya", t.toString());
                         Log.d("FailHorahaHai", "haan ho raha hai");
                     }
-                });
+                });*/
 
 
             }
@@ -216,5 +229,103 @@ public class callLogs extends BroadcastReceiver {
         countDownTimer.start();
 
     }
+
+    protected void onIncomingCallStarted(String number, Date start) {
+
+        Log.d("IncomingCallStarted", "fuckingYess");
+
+
+    }
+
+    protected void onOutgoingCallStarted(String number, Date start) {
+
+        Log.d("outgoing", "Yess");
+
+    }
+
+    protected void onIncomingCallEnded(String number, Date start, Date end) {
+
+        Log.d("IncomingEnd", "ended");
+        Log.d("IncomingEnd", callsDb.getPhone());
+        Log.d("IncomingEnd", callsDb.getType());
+        Log.d("IncomingEnd", callsDb.getDate());
+        Log.d("IncomingEnd", callsDb.getDuration()
+        );
+    }
+
+    protected void onOutgoingCallEnded(String number, Date start, Date end) {
+        Log.d("OutgoingEnded","OutgoingEnded");
+
+    }
+
+    protected void onRejectedCall(String number, Date start){
+        Log.d("Rejected", "yes Rejected");
+    }
+
+    protected void onMissedCall(String number, Date start) {
+
+        Log.d("missedCall", "missed");
+    }
+
+    public class PhonecallStartEndDetector extends PhoneStateListener {
+
+        int lastState = TelephonyManager.CALL_STATE_IDLE;
+        Date callStartTime;
+        boolean isIncoming;
+        String savedNumber;  //because the passed incoming is only valid in ringing
+
+        public PhonecallStartEndDetector() {}
+
+        //The outgoing number is only sent via a separate intent, so we need to store it out of band
+        public void setOutgoingNumber(String number){
+            savedNumber = number;
+        }
+
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+            super.onCallStateChanged(state, incomingNumber);
+            if(lastState == state){
+                //No change, debounce extras
+                return;
+            }
+            switch (state) {
+                case TelephonyManager.CALL_STATE_RINGING:
+                    isIncoming = true;
+                    callStartTime = new Date();
+                    savedNumber = incomingNumber;
+                    onIncomingCallStarted(incomingNumber, callStartTime);
+                    break;
+                case TelephonyManager.CALL_STATE_OFFHOOK:
+                    //Transition of ringing->offhook are pickups of incoming calls.  Nothing donw on them
+                    if(lastState != TelephonyManager.CALL_STATE_RINGING){
+                        isIncoming = false;
+                        callStartTime = new Date();
+                        onOutgoingCallStarted(savedNumber, callStartTime);
+                    }
+                    break;
+                case TelephonyManager.CALL_STATE_IDLE:
+                    //Went to idle-  this is the end of a call.  What type depends on previous state(s)
+                    if(lastState == TelephonyManager.CALL_STATE_RINGING){
+                        //Ring but no pickup-  a miss
+                        onMissedCall(savedNumber, callStartTime);
+                    }
+                    /*else if (lastState == TelephonyManager.CALL_STATE_RINGING){
+                        onRejectedCall(savedNumber, callStartTime);
+                    }*/
+                    else if(isIncoming){
+                        onIncomingCallEnded(savedNumber, callStartTime, new Date());
+                    }
+                    else{
+                        onOutgoingCallEnded(savedNumber, callStartTime, new Date());
+                    }
+                    break;
+            }
+            lastState = state;
+        }
+
+    }
+
+
+
 
 }
