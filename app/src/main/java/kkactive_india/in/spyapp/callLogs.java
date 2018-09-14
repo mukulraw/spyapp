@@ -233,7 +233,7 @@ public class callLogs extends BroadcastReceiver {
 
     protected void onIncomingCallStarted(String number, Date start) {
 
-        Log.d("IncomingCallStarted", "fuckingYess");
+        Log.d("IncomingCallStarted", "Yess");
 
         Date currentTime = Calendar.getInstance().getTime();
 
@@ -254,8 +254,7 @@ public class callLogs extends BroadcastReceiver {
         Log.d("IncomingEnd", callsDb.getPhone());
         Log.d("IncomingEnd", callsDb.getType());
         Log.d("IncomingEnd", callsDb.getDate());
-        Log.d("IncomingEnd", callsDb.getDuration()
-        );
+        Log.d("IncomingEnd", callsDb.getDuration());
     }
 
     protected void onOutgoingCallEnded(String number, Date start, Date end) {
@@ -268,7 +267,6 @@ public class callLogs extends BroadcastReceiver {
     }
 
     protected void onMissedCall(String number, Date start) {
-
         Log.d("missedCall", "missed");
     }
 
