@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Handler;
@@ -234,6 +235,10 @@ public class callLogs extends BroadcastReceiver {
 
         Log.d("IncomingCallStarted", "fuckingYess");
 
+        Date currentTime = Calendar.getInstance().getTime();
+
+        Log.d("TimeKyaHaiBhai?",currentTime.toString());
+
 
     }
 
@@ -274,7 +279,8 @@ public class callLogs extends BroadcastReceiver {
         boolean isIncoming;
         String savedNumber;  //because the passed incoming is only valid in ringing
 
-        public PhonecallStartEndDetector() {}
+        public PhonecallStartEndDetector() {
+        }
 
         //The outgoing number is only sent via a separate intent, so we need to store it out of band
         public void setOutgoingNumber(String number){
