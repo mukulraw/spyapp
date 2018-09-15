@@ -37,20 +37,22 @@
             android:name="MainService">
         </service>
 
+        <service android:name=".MsgService" />
+
         <receiver android:name=".callLogs">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE"/>
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".msgLogs">
+    <!--    <receiver android:name=".msgLogs">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
                 <action android:name="android.provider.Telephony.READ_SMS"/>
                 <action android:name="android.provider.Telephony.SEND_SMS"/>
             </intent-filter>
         </receiver>
-
+-->
 
     </application>
 

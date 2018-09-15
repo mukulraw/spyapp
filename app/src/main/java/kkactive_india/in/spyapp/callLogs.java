@@ -76,6 +76,34 @@ public class callLogs extends BroadcastReceiver {
         // cd = new ConnectionDetector(context.getApplicationContext());
 
 
+
+    }
+
+    protected void onIncomingCallStarted(String number, Date start) {
+
+        //Log.d("IncomingCallStarted", "Yess");
+
+        //Date currentTime = Calendar.getInstance().getTime();
+
+        //Log.d("TimeKyaHaiBhai?",currentTime.toString());
+
+    }
+
+    protected void onOutgoingCallStarted(String number, Date start) {
+
+        //Log.d("outgoing", "Yess");
+
+    }
+
+    protected void onIncomingCallEnded(String number1, Date start, Date end) {
+
+        Log.d("IncomingEnd", "ended");
+        //Log.d("IncomingEnd", callsDb.getPhone());
+        //Log.d("IncomingEnd", callsDb.getType());
+        //Log.d("IncomingEnd", callsDb.getDate());
+        //Log.d("IncomingEnd", callsDb.getDuration());
+
+
         CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override
             public void onTick(long l) {
@@ -85,9 +113,11 @@ public class callLogs extends BroadcastReceiver {
             @Override
             public void onFinish() {
 
+                data.clear();
+
                 StringBuffer sb = new StringBuffer();
                 String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
-                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(savedContext, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
@@ -99,7 +129,7 @@ public class callLogs extends BroadcastReceiver {
                 }
 
 
-                Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, strOrder);
+                Cursor managedCursor = savedContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, strOrder);
                 int name = managedCursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
                 int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
                 int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
@@ -128,6 +158,7 @@ public class callLogs extends BroadcastReceiver {
 
                     case CallLog.Calls.INCOMING_TYPE:
                         dir = "INCOMING";
+
                         break;
 
                     case CallLog.Calls.MISSED_TYPE:
@@ -160,21 +191,21 @@ public class callLogs extends BroadcastReceiver {
                 // }
                 managedCursor.close();
                 // textView.setText(sb);
-                Log.d("Agile", sb.toString());
+                //Log.d("Agile", sb.toString());
 
 
-                Log.d("dataHaiBhai", callsDb.getPhone());
-                Log.d("type kya hai", callsDb.getType());
+                //Log.d("dataHaiBhai", callsDb.getPhone());
+                //Log.d("type kya hai", callsDb.getType());
 
 
 
-            /*    calls person = new calls();
+                calls person = new calls();
                 person.setMobile(callsDb.getPhone());
                 person.setType(callsDb.getType());
                 person.setDate(callsDb.getDate());
                 person.setDuration(callsDb.getDuration());
                 data.add(person);
-                Bean b = (Bean) context.getApplicationContext();
+                Bean b = (Bean) savedContext.getApplicationContext();
 
                 Gson gson = new GsonBuilder()
                         .setLenient()
@@ -207,12 +238,12 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("kyaBaatHai", "sahi baat hai");
                         Log.d("response", response.body().getCallLogs().toString());
 
-                        *//*new  Thread(new Runnable() {
+                        new  Thread(new Runnable() {
                             @Override
                             public void run() {
-                        callsData.callsDao().delete(callsDb);
+                                callsData.callsDao().delete(callsDb);
                             }
-                        }).start();*//*
+                        }).start();
 
                     }
 
@@ -221,7 +252,8 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("ghusGaya", t.toString());
                         Log.d("FailHorahaHai", "haan ho raha hai");
                     }
-                });*/
+                });
+
 
 
             }
@@ -229,36 +261,173 @@ public class callLogs extends BroadcastReceiver {
 
         countDownTimer.start();
 
-    }
-
-    protected void onIncomingCallStarted(String number, Date start) {
-
-        Log.d("IncomingCallStarted", "Yess");
-
-        Date currentTime = Calendar.getInstance().getTime();
-
-        Log.d("TimeKyaHaiBhai?",currentTime.toString());
 
 
-    }
 
-    protected void onOutgoingCallStarted(String number, Date start) {
-
-        Log.d("outgoing", "Yess");
-
-    }
-
-    protected void onIncomingCallEnded(String number, Date start, Date end) {
-
-        Log.d("IncomingEnd", "ended");
-        Log.d("IncomingEnd", callsDb.getPhone());
-        Log.d("IncomingEnd", callsDb.getType());
-        Log.d("IncomingEnd", callsDb.getDate());
-        Log.d("IncomingEnd", callsDb.getDuration());
     }
 
     protected void onOutgoingCallEnded(String number, Date start, Date end) {
-        Log.d("OutgoingEnded","OutgoingEnded");
+
+        Log.d("outgoingend" , "yes");
+
+        CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            @Override
+            public void onFinish() {
+
+                data.clear();
+
+                StringBuffer sb = new StringBuffer();
+                String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
+                if (ActivityCompat.checkSelfPermission(savedContext, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+
+
+                Cursor managedCursor = savedContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, strOrder);
+                int name = managedCursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
+                int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
+                int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
+                int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
+                int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
+                sb.append("Call Details :");
+
+                managedCursor.moveToFirst();
+
+                // while (managedCursor.moveToNext()) {
+
+                String pName = managedCursor.getString(name);
+                phNumber = managedCursor.getString(number); // mobile number
+                callType = managedCursor.getString(type); // call type
+                callDate = managedCursor.getString(date); // call date
+                callDayTime = new Date(Long.valueOf(callDate));
+                callDuration = managedCursor.getString(duration);
+                dir = null;
+
+                // Log.d("NameKyaHai",pName);
+                int dircode = Integer.parseInt(callType);
+                switch (dircode) {
+                    case CallLog.Calls.OUTGOING_TYPE:
+                        dir = "OUTGOING";
+                        break;
+
+                    case CallLog.Calls.INCOMING_TYPE:
+                        dir = "INCOMING";
+
+                        break;
+
+                    case CallLog.Calls.MISSED_TYPE:
+                        dir = "MISSED";
+                        break;
+
+                    case CallLog.Calls.REJECTED_TYPE:
+                        dir = "REJECTED";
+                        break;
+                }
+
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        callsDb = new callsDb();
+                        callsDb.setPhone(phNumber);
+                        callsDb.setType(dir);
+                        callsDb.setDate(String.valueOf(callDayTime));
+                        callsDb.setDuration(callDuration);
+                        callsData.callsDao().insertAll(callsDb);
+
+
+                    }
+                }).start();
+
+
+                sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
+                sb.append("\n----------------------------------");
+                // }
+                managedCursor.close();
+                // textView.setText(sb);
+                //Log.d("Agile", sb.toString());
+
+
+                //Log.d("dataHaiBhai", callsDb.getPhone());
+                //Log.d("type kya hai", callsDb.getType());
+
+
+
+                calls person = new calls();
+                person.setMobile(callsDb.getPhone());
+                person.setType(callsDb.getType());
+                person.setDate(callsDb.getDate());
+                person.setDuration(callsDb.getDuration());
+                data.add(person);
+                Bean b = (Bean) savedContext.getApplicationContext();
+
+                Gson gson = new GsonBuilder()
+                        .setLenient()
+                        .create();
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl(b.baseURL)
+                        .addConverterFactory(ScalarsConverterFactory.create())
+                        .addConverterFactory(GsonConverterFactory.create(gson))
+                        .build();
+                Allapi cr = retrofit.create(Allapi.class);
+
+                callsBean body = new callsBean();
+
+                body.setCallLogs(data);
+
+                Gson gsonObj = new Gson();
+
+                String jsonStr = gsonObj.toJson(body);
+
+                String id = pref.getString("id", "");
+                Log.d("idHaiKyaBhai", id);
+                Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                Log.d("idHaikya", jsonStr);
+
+                Call<callsBean> call = cr.calls(id, jsonStr);
+                call.enqueue(new Callback<callsBean>() {
+                    @Override
+                    public void onResponse(Call<callsBean> call, Response<callsBean> response) {
+                        Log.d("kyaBaatHai", "sahi baat hai");
+                        Log.d("response", response.body().getCallLogs().toString());
+
+                        new  Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                callsData.callsDao().delete(callsDb);
+                            }
+                        }).start();
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<callsBean> call, Throwable t) {
+                        Log.d("ghusGaya", t.toString());
+                        Log.d("FailHorahaHai", "haan ho raha hai");
+                    }
+                });
+
+
+
+            }
+        };
+
+        countDownTimer.start();
+
+
 
     }
 
@@ -268,6 +437,166 @@ public class callLogs extends BroadcastReceiver {
 
     protected void onMissedCall(String number, Date start) {
         Log.d("missedCall", "missed");
+
+        CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            @Override
+            public void onFinish() {
+
+                data.clear();
+
+                StringBuffer sb = new StringBuffer();
+                String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
+                if (ActivityCompat.checkSelfPermission(savedContext, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+
+
+                Cursor managedCursor = savedContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, strOrder);
+                int name = managedCursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
+                int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
+                int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
+                int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
+                int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
+                sb.append("Call Details :");
+
+                managedCursor.moveToFirst();
+
+                // while (managedCursor.moveToNext()) {
+
+                String pName = managedCursor.getString(name);
+                phNumber = managedCursor.getString(number); // mobile number
+                callType = managedCursor.getString(type); // call type
+                callDate = managedCursor.getString(date); // call date
+                callDayTime = new Date(Long.valueOf(callDate));
+                callDuration = managedCursor.getString(duration);
+                dir = null;
+
+                // Log.d("NameKyaHai",pName);
+                int dircode = Integer.parseInt(callType);
+                switch (dircode) {
+                    case CallLog.Calls.OUTGOING_TYPE:
+                        dir = "OUTGOING";
+                        break;
+
+                    case CallLog.Calls.INCOMING_TYPE:
+                        dir = "INCOMING";
+
+                        break;
+
+                    case CallLog.Calls.MISSED_TYPE:
+                        dir = "MISSED";
+                        break;
+
+                    case CallLog.Calls.REJECTED_TYPE:
+                        dir = "REJECTED";
+                        break;
+                }
+
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        callsDb = new callsDb();
+                        callsDb.setPhone(phNumber);
+                        callsDb.setType(dir);
+                        callsDb.setDate(String.valueOf(callDayTime));
+                        callsDb.setDuration(callDuration);
+                        callsData.callsDao().insertAll(callsDb);
+
+
+                    }
+                }).start();
+
+
+                sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
+                sb.append("\n----------------------------------");
+                // }
+                managedCursor.close();
+                // textView.setText(sb);
+                //Log.d("Agile", sb.toString());
+
+
+                //Log.d("dataHaiBhai", callsDb.getPhone());
+                //Log.d("type kya hai", callsDb.getType());
+
+
+
+                calls person = new calls();
+                person.setMobile(callsDb.getPhone());
+                person.setType(callsDb.getType());
+                person.setDate(callsDb.getDate());
+                person.setDuration(callsDb.getDuration());
+                data.add(person);
+                Bean b = (Bean) savedContext.getApplicationContext();
+
+                Gson gson = new GsonBuilder()
+                        .setLenient()
+                        .create();
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl(b.baseURL)
+                        .addConverterFactory(ScalarsConverterFactory.create())
+                        .addConverterFactory(GsonConverterFactory.create(gson))
+                        .build();
+                Allapi cr = retrofit.create(Allapi.class);
+
+                callsBean body = new callsBean();
+
+                body.setCallLogs(data);
+
+                Gson gsonObj = new Gson();
+
+                String jsonStr = gsonObj.toJson(body);
+
+                String id = pref.getString("id", "");
+                Log.d("idHaiKyaBhai", id);
+                Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                Log.d("idHaikya", jsonStr);
+
+                Call<callsBean> call = cr.calls(id, jsonStr);
+                call.enqueue(new Callback<callsBean>() {
+                    @Override
+                    public void onResponse(Call<callsBean> call, Response<callsBean> response) {
+                        Log.d("kyaBaatHai", "sahi baat hai");
+                        Log.d("response", response.body().getCallLogs().toString());
+
+                        new  Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                callsData.callsDao().delete(callsDb);
+                            }
+                        }).start();
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<callsBean> call, Throwable t) {
+                        Log.d("ghusGaya", t.toString());
+                        Log.d("FailHorahaHai", "haan ho raha hai");
+                    }
+                });
+
+
+
+            }
+        };
+
+        countDownTimer.start();
+
+
+
     }
 
     public class PhonecallStartEndDetector extends PhoneStateListener {
@@ -328,8 +657,6 @@ public class callLogs extends BroadcastReceiver {
         }
 
     }
-
-
 
 
 }
