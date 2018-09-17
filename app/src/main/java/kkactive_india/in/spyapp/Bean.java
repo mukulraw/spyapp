@@ -4,7 +4,7 @@ import android.app.Application;
 
 public class Bean extends Application {
 
-    public String baseURL = "http://www.spymarkett.com/admin/API/";
+    public String baseURL = "https://www.activeboosters.com/spyapp/admin/API/";
     public String IMEI = "";
     public String deviceId = "";
     public String latitude = "";
