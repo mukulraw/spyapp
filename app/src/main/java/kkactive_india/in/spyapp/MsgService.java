@@ -37,6 +37,7 @@ public class MsgService extends Service {
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     Timer timer;
+    ConnectionDetector cd;
 
     @Nullable
     @Override
@@ -47,6 +48,8 @@ public class MsgService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+
+        cd = new ConnectionDetector(getApplication());
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -109,39 +112,42 @@ public class MsgService extends Service {
 
                // data.clear();
 
-                Bean b = (Bean) getApplicationContext();
+                if (cd.isConnectingToInternet()) {
 
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(b.baseURL)
-                        .addConverterFactory(ScalarsConverterFactory.create())
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
-                Allapi cr = retrofit.create(Allapi.class);
-                MsgBean body = new MsgBean();
-                body.setMsgData(data);
+                    Bean b = (Bean) getApplicationContext();
 
-                Gson gsonObj = new Gson();
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
+                    MsgBean body = new MsgBean();
+                    body.setMsgData(data);
 
-                String jsonStr = gsonObj.toJson(body);
-                String id = pref.getString("id", "");
-                Log.d("idHaiKyaBhai", id);
-                Log.d("idHaiKyaBhai", pref.getString("id", ""));
-                Log.d("idHaikya", jsonStr);
-                Call<MsgBean> call = cr.msgs(id, jsonStr);
-                call.enqueue(new Callback<MsgBean>() {
-                    @Override
-                    public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
-                        Log.d("messageGaya?", "haanGaya");
-                        data.clear();
-                    }
+                    Gson gsonObj = new Gson();
 
-                    @Override
-                    public void onFailure(Call<MsgBean> call, Throwable t) {
-                        Log.d("messageGaya?", "nahiGaya");
-                        Log.d("kyuNahiGaya?",t.toString());
+                    String jsonStr = gsonObj.toJson(body);
+                    String id = pref.getString("id", "");
+                    Log.d("idHaiKyaBhai", id);
+                    Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                    Log.d("idHaikya", jsonStr);
+                    Call<MsgBean> call = cr.msgs(id, jsonStr);
+                    call.enqueue(new Callback<MsgBean>() {
+                        @Override
+                        public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
+                            Log.d("messageGaya?", "haanGaya");
+                            data.clear();
+                        }
 
-                    }
-                });
+                        @Override
+                        public void onFailure(Call<MsgBean> call, Throwable t) {
+                            Log.d("messageGaya?", "nahiGaya");
+                            Log.d("kyuNahiGaya?", t.toString());
+
+                        }
+                    });
+                }
 
             }
         }, 0, 1000 * 60);

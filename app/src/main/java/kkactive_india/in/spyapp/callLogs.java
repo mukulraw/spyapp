@@ -198,7 +198,7 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("type kya hai", callsDb.getType());
 
 
-
+                List<callsDb> callsDbs = callsData.callsDao().getAll();
                 calls person = new calls();
                 person.setMobile(callsDb.getPhone());
                 person.setType(callsDb.getType());
@@ -528,7 +528,12 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("Agile", sb.toString());
 
 
-                //Log.d("dataHaiBhai", callsDb.getPhone());
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("dataHaiBhai", callsData.callsDao().getAll().toString());
+                    }
+                });
                 //Log.d("type kya hai", callsDb.getType());
 
 
