@@ -15,6 +15,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.Browser;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
@@ -41,6 +42,7 @@ import com.google.gson.JsonParser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -75,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     List<ContactDatum> data = new ArrayList<>();
     SharedPreferences pref;
     SharedPreferences.Editor edit;
-
+    final String state = Environment.getExternalStorageState();
 
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -270,6 +272,35 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+        files();
+
+
+
+    }
+
+    public void files(){
+        if ( Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state) ) {  // we can read the External Storage...
+            getAllFilesOfDir(Environment.getExternalStorageDirectory());
+        }
+    }
+
+    private void getAllFilesOfDir(File directory) {
+        Log.d("Directory", "Directory: " + directory.getAbsolutePath() + "\n");
+
+        final File[] files = directory.listFiles();
+
+        if ( files != null ) {
+            for ( File file : files ) {
+                if ( file != null ) {
+                    if ( file.isDirectory() ) {  // it is a folder...
+                        getAllFilesOfDir(file);
+                    }
+                    else {  // it is a file...
+                        Log.d("FileHaiKya", "File: " + file.getAbsolutePath() + "\n");
+                    }
+                }
+            }
+        }
     }
 
     public void mainApi(){
