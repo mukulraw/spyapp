@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "967214924016",
+    "firebase_url": "https://spyapp-2b500.firebaseio.com",
+    "project_id": "spyapp-2b500",
+    "storage_bucket": "spyapp-2b500.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:967214924016:android:aebd83ad75c2ac6e",
+        "android_client_info": {
+          "package_name": "kkactive_india.in.spyapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "967214924016-7qhhp9cv081g5q44k42ojfsv25dmulpq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kkactive_india.in.spyapp",
+            "certificate_hash": "3773366e5ae5b39230456d601944e0bc4a671c13"
+          }
+        },
+        {
+          "client_id": "967214924016-05418j4qphdc7alco08nk66iab10lbbp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqVjV0iRNop6ewSjmbQUTsDQS47R75qRE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "967214924016-05418j4qphdc7alco08nk66iab10lbbp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
