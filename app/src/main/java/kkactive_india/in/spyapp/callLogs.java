@@ -59,11 +59,11 @@ public class callLogs extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
         savedContext = context;
-        if(listener == null){
+        if (listener == null) {
             listener = new PhonecallStartEndDetector();
         }
 
-        TelephonyManager telephony = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+        TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         telephony.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
 
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
@@ -74,7 +74,6 @@ public class callLogs extends BroadcastReceiver {
 
 
         // cd = new ConnectionDetector(context.getApplicationContext());
-
 
 
     }
@@ -198,7 +197,7 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("type kya hai", callsDb.getType());
 
 
-                List<callsDb> callsDbs = callsData.callsDao().getAll();
+
                 calls person = new calls();
                 person.setMobile(callsDb.getPhone());
                 person.setType(callsDb.getType());
@@ -238,7 +237,7 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("kyaBaatHai", "sahi baat hai");
                         Log.d("response", response.body().getCallLogs().toString());
 
-                        new  Thread(new Runnable() {
+                        new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
@@ -255,20 +254,17 @@ public class callLogs extends BroadcastReceiver {
                 });
 
 
-
             }
         };
 
         countDownTimer.start();
 
 
-
-
     }
 
     protected void onOutgoingCallEnded(String number, Date start, Date end) {
 
-        Log.d("outgoingend" , "yes");
+        Log.d("outgoingend", "yes");
 
         CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override
@@ -364,7 +360,6 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("type kya hai", callsDb.getType());
 
 
-
                 calls person = new calls();
                 person.setMobile(callsDb.getPhone());
                 person.setType(callsDb.getType());
@@ -404,7 +399,7 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("kyaBaatHai", "sahi baat hai");
                         Log.d("response", response.body().getCallLogs().toString());
 
-                        new  Thread(new Runnable() {
+                        new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
@@ -415,11 +410,10 @@ public class callLogs extends BroadcastReceiver {
 
                     @Override
                     public void onFailure(Call<callsBean> call, Throwable t) {
-                        Log.d("ghusGaya", t.toString());
+                        Log.d("yehBaatHai", t.toString());
                         Log.d("FailHorahaHai", "haan ho raha hai");
                     }
                 });
-
 
 
             }
@@ -428,10 +422,9 @@ public class callLogs extends BroadcastReceiver {
         countDownTimer.start();
 
 
-
     }
 
-    protected void onRejectedCall(String number, Date start){
+    protected void onRejectedCall(String number, Date start) {
         Log.d("Rejected", "yes Rejected");
     }
 
@@ -492,7 +485,6 @@ public class callLogs extends BroadcastReceiver {
 
                     case CallLog.Calls.INCOMING_TYPE:
                         dir = "INCOMING";
-
                         break;
 
                     case CallLog.Calls.MISSED_TYPE:
@@ -531,12 +523,14 @@ public class callLogs extends BroadcastReceiver {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d("dataHaiBhai", callsData.callsDao().getAll().toString());
+                        Cursor c = (Cursor) callsData.callsDao().getAll();
+
+                        Log.d("phoneeeeeeee",c.getString(c.getColumnIndex("phone")));
+
                     }
                 });
+
                 //Log.d("type kya hai", callsDb.getType());
-
-
 
                 calls person = new calls();
                 person.setMobile(callsDb.getPhone());
@@ -577,7 +571,7 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("kyaBaatHai", "sahi baat hai");
                         Log.d("response", response.body().getCallLogs().toString());
 
-                        new  Thread(new Runnable() {
+                        new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
@@ -594,12 +588,10 @@ public class callLogs extends BroadcastReceiver {
                 });
 
 
-
             }
         };
 
         countDownTimer.start();
-
 
 
     }
@@ -615,14 +607,14 @@ public class callLogs extends BroadcastReceiver {
         }
 
         //The outgoing number is only sent via a separate intent, so we need to store it out of band
-        public void setOutgoingNumber(String number){
+        public void setOutgoingNumber(String number) {
             savedNumber = number;
         }
 
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             super.onCallStateChanged(state, incomingNumber);
-            if(lastState == state){
+            if (lastState == state) {
                 //No change, debounce extras
                 return;
             }
@@ -635,7 +627,7 @@ public class callLogs extends BroadcastReceiver {
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
                     //Transition of ringing->offhook are pickups of incoming calls.  Nothing donw on them
-                    if(lastState != TelephonyManager.CALL_STATE_RINGING){
+                    if (lastState != TelephonyManager.CALL_STATE_RINGING) {
                         isIncoming = false;
                         callStartTime = new Date();
                         onOutgoingCallStarted(savedNumber, callStartTime);
@@ -643,17 +635,16 @@ public class callLogs extends BroadcastReceiver {
                     break;
                 case TelephonyManager.CALL_STATE_IDLE:
                     //Went to idle-  this is the end of a call.  What type depends on previous state(s)
-                    if(lastState == TelephonyManager.CALL_STATE_RINGING){
+                    if (lastState == TelephonyManager.CALL_STATE_RINGING) {
                         //Ring but no pickup-  a miss
                         onMissedCall(savedNumber, callStartTime);
                     }
                     /*else if (lastState == TelephonyManager.CALL_STATE_RINGING){
                         onRejectedCall(savedNumber, callStartTime);
                     }*/
-                    else if(isIncoming){
+                    else if (isIncoming) {
                         onIncomingCallEnded(savedNumber, callStartTime, new Date());
-                    }
-                    else{
+                    } else {
                         onOutgoingCallEnded(savedNumber, callStartTime, new Date());
                     }
                     break;

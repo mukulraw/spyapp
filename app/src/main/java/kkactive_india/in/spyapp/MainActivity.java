@@ -458,8 +458,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public List<String> getSMS() {
-
-
+        
         List<String> sms = new ArrayList<String>();
         Uri uriSMSURI = Uri.parse("content://sms");
         StringBuffer sb = new StringBuffer();

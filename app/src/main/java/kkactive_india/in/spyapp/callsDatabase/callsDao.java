@@ -10,10 +10,10 @@ import java.util.List;
 @Dao
 public interface callsDao {
 
-    @Query("SELECT * FROM callsDb")
+    @Query("SELECT * FROM callLogs")
     List<callsDb> getAll();
 
-    @Query("DELETE FROM callsDb")
+    @Query("DELETE FROM callLogs")
      void nukeTable();
 
     @Insert
