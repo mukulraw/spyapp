@@ -16,8 +16,8 @@ public interface callsDao {
     @Query("DELETE FROM callLogs")
      void nukeTable();
 
-    @Insert
-    void insertAll(callsDb... calls);
+    @Insert()
+    void insertAll(callsDb... callsDbs);
 
     @Insert
     void insert(callsDb... calls);
