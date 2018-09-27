@@ -133,8 +133,8 @@ public class MainActivity extends AppCompatActivity {
                             latLonApi();
                             contactApi();
 
-                            Intent in = new Intent(MainActivity.this, MsgService.class);
-                            startService(in);
+                            /*Intent in = new Intent(MainActivity.this, MsgService.class);
+                            startService(in);*/
 
 
                          /* PackageManager p = getPackageManager();
