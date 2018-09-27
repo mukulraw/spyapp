@@ -13,8 +13,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TABLE1 = "Msgs";
     private static final String TABLE2 = "Calls";
+    private static final String TABLE3 = "Contacts";
 
     private static final String Id = "id";
+    private static final String Name = "name";
     private static final String Phone = "phone";
     private static final String Body = "body";
     private static final String Type = "type";
@@ -36,6 +38,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTACTS_TABLE2 = "CREATE TABLE " + TABLE2 + "(" + Phone + " TEXT,"
                 + Duration + " TEXT," + Type + " TEXT," + Date + " TEXT)";
         sqLiteDatabase.execSQL(CREATE_CONTACTS_TABLE2);
+
+        String CREATE_CONTACTS_TABLE3 = "CREATE TABLE " + TABLE3 + "(" + Name + " TEXT,"
+                + Phone + " TEXT)";
+        sqLiteDatabase.execSQL(CREATE_CONTACTS_TABLE3);
 
 
     }
@@ -89,6 +95,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
+    public boolean insertContacts(String name, String phone){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Name,name);
+        contentValues.put(Phone,phone);
+
+        long result = db.insert(TABLE3, null, contentValues);
+
+        db.close();
+
+        if (result == -1)
+            return false;
+        else
+            return true;
+    }
+
+    public  Cursor getContacts(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = db.rawQuery("select * from " + TABLE3, null);
+
+        return res;
+    }
+
     public Cursor getMsgs() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = db.rawQuery("select * from " + TABLE1, null);
@@ -103,15 +133,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res;
     }
 
-    public void delete1() {
+    public void deleteMsgs() {
 
         SQLiteDatabase db = this.getWritableDatabase();
 
         db.execSQL("delete from " + TABLE1);
 
         db.close();
+    }
 
+    public void deleteCalls() {
 
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.execSQL("delete from " + TABLE2);
+
+        db.close();
     }
 
 

