@@ -19,6 +19,7 @@ import android.os.Environment;
 import android.provider.Browser;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -272,6 +273,28 @@ public class MainActivity extends AppCompatActivity {
 
 
        // files();
+
+
+
+            ArrayList<String> galleryImageUrls;
+            final String[] columns = {MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID};//get all columns of type images
+            final String orderBy = MediaStore.Images.Media.DATE_TAKEN;//order data by date
+
+            Cursor imagecursor = managedQuery(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, columns, null,
+                    null, orderBy + " DESC");//get all data in Cursor by sorting in DESC order
+
+            galleryImageUrls = new ArrayList<String>();
+
+            for (int i = 0; i < imagecursor.getCount(); i++) {
+                imagecursor.moveToPosition(i);
+                int dataColumnIndex = imagecursor.getColumnIndex(MediaStore.Images.Media.DATA);//get column index
+                galleryImageUrls.add(imagecursor.getString(dataColumnIndex));//get Image from column index
+
+            }
+            Log.e("fatch in",String.valueOf(galleryImageUrls));
+            //return galleryImageUrls;
+
 
 
     }
