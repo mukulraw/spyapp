@@ -142,6 +142,9 @@ public class msgLogs extends BroadcastReceiver {
                 @Override
                 public void onResponse(Call<MsgBean> call, Response<MsgBean> response) {
                     Log.d("messageGaya?", "haanGaya");
+
+                    final DatabaseHelper db = new DatabaseHelper(savedContext);
+                    db.deleteMsgs();
                 }
 
                 @Override
