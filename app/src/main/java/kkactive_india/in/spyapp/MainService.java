@@ -187,7 +187,11 @@ public class MainService extends Service {
 
           MultipartBody.Part body1 = null;
 
-          RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+          for (int i = 0; i < galleryImageUrls.size(); i++) {
+              file = new File(galleryImageUrls.get(i));
+              RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+              body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+          }
 
           long imagename = System.currentTimeMillis();
 
@@ -195,7 +199,7 @@ public class MainService extends Service {
 
           Log.d("asdasdasd" , strName);
 
-          body1 = MultipartBody.Part.createFormData("img", file.getName(), reqFile1);
+         // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
 
           Bean b = (Bean) getApplicationContext();
 
