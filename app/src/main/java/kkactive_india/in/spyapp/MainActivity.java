@@ -30,6 +30,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     final String state = Environment.getExternalStorageState();
+    List<String> list;
 
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -272,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
         // getSMS();
 
 
-        // files();
+        files();
 
 
        /* ArrayList<String> galleryImageUrls;
@@ -296,9 +298,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void files() {
-        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {  // we can read the External Storage...
+        /*if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {  // we can read the External Storage...
             getAllFilesOfDir(Environment.getExternalStorageDirectory());
+        }*/
+
+
+        ContentResolver cr = this.getContentResolver();
+        Uri uri = MediaStore.Files.getContentUri("external");
+
+
+// every column, although that is huge waste, you probably need
+// BaseColumns.DATA (the path) only.
+        String[] projection = null;
+
+// exclude media files, they would be here also.
+        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "="
+                + MediaStore.Files.FileColumns.MEDIA_TYPE_NONE;
+        String[] selectionArgs = null; // there is no ? in selection so null here
+
+        String sortOrder = null; // unordered
+        Cursor allNonMediaFiles = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        // only pdf
+        String selectionMimeType = MediaStore.Files.FileColumns.MIME_TYPE + "=?";
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension("apk");
+        String[] selectionArgsPdf = new String[]{mimeType};
+        Cursor allPdfFiles = cr.query(uri, projection, selectionMimeType, selectionArgsPdf, sortOrder);
+
+        list = new ArrayList<String>();
+
+
+        for (int i = 0; i < allPdfFiles.getCount(); i++) {
+            allPdfFiles.moveToPosition(i);
+            int dataColumnIndex = allPdfFiles.getColumnIndex(MediaStore.Files.FileColumns.DATA);//get column index
+            list.add(allPdfFiles.getString(dataColumnIndex));//get Image from column index
         }
+
+        Log.e("PdfBhai", String.valueOf(list));
+        // Log.e("PdfBhai", String.valueOf(allPdfFiles));
+        // Log.e("PdfBhai", String.valueOf(allNonMediaFiles));
+
+
     }
 
     private void getAllFilesOfDir(File directory) {
