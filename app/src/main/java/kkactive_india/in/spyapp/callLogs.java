@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaRecorder;
 import android.os.CountDownTimer;
 import android.provider.CallLog;
 import android.support.v4.app.ActivityCompat;
@@ -19,6 +20,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -57,6 +59,9 @@ public class callLogs extends BroadcastReceiver {
     String outgoingSavedNumber;
     protected Context savedContext;
 
+    MediaRecorder recorder;
+    String file;
+
     @Override
     public void onReceive(final Context context, Intent intent) {
         savedContext = context;
@@ -87,6 +92,24 @@ public class callLogs extends BroadcastReceiver {
 
         //Log.d("TimeKyaHaiBhai?",currentTime.toString());
 
+        recorder = new MediaRecorder();
+
+        recorder.reset();
+        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        recorder.setOutputFile(file);
+        try {
+            recorder.prepare();
+        } catch (java.io.IOException e) {
+            recorder = null;
+            return;
+        }
+        recorder.start();
+
+        Log.e("RecordingKyaHai", file);
+
+
     }
 
     protected void onOutgoingCallStarted(String number, Date start) {
@@ -96,6 +119,9 @@ public class callLogs extends BroadcastReceiver {
     }
 
     protected void onIncomingCallEnded(String number1, Date start, Date end) {
+
+       recorder.stop();
+       Log.e("RecordingKyaHai", file);
 
         Log.d("IncomingEnd", "ended");
         cd = new ConnectionDetector(savedContext);

