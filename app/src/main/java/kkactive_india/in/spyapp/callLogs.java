@@ -84,13 +84,9 @@ public class callLogs extends BroadcastReceiver {
 
     }
 
-    protected void onIncomingCallStarted(String number, Date start) {
 
-        //Log.d("IncomingCallStarted", "Yess");
+    public void record(){
 
-        //Date currentTime = Calendar.getInstance().getTime();
-
-        //Log.d("TimeKyaHaiBhai?",currentTime.toString());
 
         recorder = new MediaRecorder();
 
@@ -108,7 +104,15 @@ public class callLogs extends BroadcastReceiver {
         recorder.start();
 
         Log.e("RecordingKyaHai", file);
+    }
 
+    protected void onIncomingCallStarted(String number, Date start) {
+
+        //Log.d("IncomingCallStarted", "Yess");
+
+        //Date currentTime = Calendar.getInstance().getTime();
+
+        //Log.d("TimeKyaHaiBhai?",currentTime.toString());
 
     }
 
@@ -120,8 +124,8 @@ public class callLogs extends BroadcastReceiver {
 
     protected void onIncomingCallEnded(String number1, Date start, Date end) {
 
-       recorder.stop();
-       Log.e("RecordingKyaHai", file);
+      // recorder.stop();
+      // Log.e("RecordingKyaHai", file);
 
         Log.d("IncomingEnd", "ended");
         cd = new ConnectionDetector(savedContext);
@@ -129,7 +133,6 @@ public class callLogs extends BroadcastReceiver {
         //Log.d("IncomingEnd", callsDb.getType());
         //Log.d("IncomingEnd", callsDb.getDate());
         //Log.d("IncomingEnd", callsDb.getDuration());
-
 
         CountDownTimer countDownTimer = new CountDownTimer(500, 1000) {
             @Override

