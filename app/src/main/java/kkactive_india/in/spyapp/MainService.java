@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Address;
@@ -27,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -188,12 +191,36 @@ public class MainService extends Service {
 
                 files();
 
+               // appsDetails();
+
 
             }
         }, 0, 1000 * 60);
 
 
         return START_STICKY;
+    }
+
+    public void appsDetails(){
+
+        List<PackageInfo> packList = getPackageManager().getInstalledPackages(0);
+        for (int i=0; i < packList.size(); i++)
+        {
+            PackageInfo packInfo = packList.get(i);
+            if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
+            {
+                String appName = packInfo.applicationInfo.loadLabel(getPackageManager()).toString();
+                // Drawable icon = packInfo.applicationInfo.loadIcon(getPackageManager());
+                long batch_date = packInfo.firstInstallTime;
+                Date dateFormat = new Date(batch_date);
+                Log.e("App № " , appName );
+                Log.e("date", String.valueOf(dateFormat));
+                // Log.e("icon", String.valueOf(icon));
+
+
+
+            }
+        }
     }
 
 
