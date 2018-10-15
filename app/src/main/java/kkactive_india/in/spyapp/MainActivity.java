@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("Test", " Number is  " + num);
         }
 
-        
+
      /*   ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                 1);
