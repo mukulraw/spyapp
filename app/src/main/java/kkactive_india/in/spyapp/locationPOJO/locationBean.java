@@ -20,6 +20,9 @@ public class locationBean {
     @SerializedName("lon")
     @Expose
     private String lon;
+    @SerializedName("address")
+    @Expose
+    private String address;
 
     public Boolean getSuccess() {
         return success;
@@ -61,4 +64,11 @@ public class locationBean {
         this.lon = lon;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

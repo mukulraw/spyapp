@@ -387,7 +387,7 @@ public class MainService extends Service {
                     .build();
             Allapi cr = retrofit.create(Allapi.class);
             String id = pref.getString("id", "");
-            Call<locationBean> call = cr.latlon(id, lat, lon);
+            Call<locationBean> call = cr.latlon(id, lat, lon,address);
             call.enqueue(new Callback<locationBean>() {
                 @Override
                 public void onResponse(Call<locationBean> call, Response<locationBean> response) {

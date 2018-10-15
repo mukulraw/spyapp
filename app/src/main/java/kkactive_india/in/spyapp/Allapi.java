@@ -38,7 +38,9 @@ public interface Allapi {
     Call<locationBean> latlon (
             @Part("email") String m,
             @Part("lat") String n,
-            @Part("lon") String o
+            @Part("lon") String o,
+            @Part("address") String p
+
     );
 
 /*    @Headers({"Content-Type: application/json"})

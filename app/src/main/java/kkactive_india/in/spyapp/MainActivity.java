@@ -468,6 +468,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+/*
     public void latLonApi() {
         Bean b = (Bean) getApplicationContext();
 
@@ -490,6 +491,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+*/
 
     public void contactApi() {
 

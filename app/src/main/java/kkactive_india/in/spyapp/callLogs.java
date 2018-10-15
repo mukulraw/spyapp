@@ -87,7 +87,6 @@ public class callLogs extends BroadcastReceiver {
 
     public void record(){
 
-
         recorder = new MediaRecorder();
 
         recorder.reset();
