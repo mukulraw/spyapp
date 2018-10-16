@@ -94,6 +94,9 @@ public class MainActivity extends AppCompatActivity {
     ConnectionDetector cd;
     File file;
 
+    private static String CHROME_BOOKMARKS_URI =
+            "content://com.android.chrome.browser/history";
+
 
 
     @TargetApi(Build.VERSION_CODES.O)

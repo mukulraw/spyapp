@@ -14,9 +14,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TABLE1 = "Msgs";
     private static final String TABLE2 = "Calls";
     private static final String TABLE3 = "Contacts";
+    private static final String TABLE4 = "AppDetails";
 
     private static final String Id = "id";
     private static final String Name = "name";
+    private static final String AppName = "appname";
+    private static final String AppDate = "appdate";
     private static final String Phone = "phone";
     private static final String Body = "body";
     private static final String Type = "type";
@@ -42,6 +45,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTACTS_TABLE3 = "CREATE TABLE " + TABLE3 + "(" + Name + " TEXT,"
                 + Phone + " TEXT)";
         sqLiteDatabase.execSQL(CREATE_CONTACTS_TABLE3);
+
+        String CREATE_CONTACTS_TABLE4 = "CREATE TABLE " + TABLE4 + "(" + AppName + " TEXT,"
+                + AppDate + " TEXT)";
+        sqLiteDatabase.execSQL(CREATE_CONTACTS_TABLE4);
 
 
     }
@@ -118,6 +125,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return res;
     }
+
+    public boolean insertAppDetails(String appName, String appDate){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(AppName, appName);
+        contentValues.put(AppDate, appDate);
+
+        long result = db.insert(TABLE4, null, contentValues);
+
+        db.close();
+
+        if (result == -1)
+            return false;
+        else
+            return true;
+
+    }
+
+    public  Cursor getAppDetails(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = db.rawQuery("select * from " + TABLE4, null);
+
+        return res;
+    }
+
 
     public Cursor getMsgs() {
         SQLiteDatabase db = this.getReadableDatabase();

