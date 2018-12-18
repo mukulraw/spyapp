@@ -9,8 +9,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.provider.CallLog;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.PhoneStateListener;
@@ -21,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,8 +62,10 @@ public class callLogs extends BroadcastReceiver {
     String outgoingSavedNumber;
     protected Context savedContext;
 
-    MediaRecorder recorder;
-    String file;
+    private MediaRecorder recorder;
+    boolean recordStarted;
+    File audiofile = null;
+    AudioManager audioManager;
 
     @Override
     public void onReceive(final Context context, Intent intent) {
@@ -69,9 +74,9 @@ public class callLogs extends BroadcastReceiver {
             listener = new PhonecallStartEndDetector();
         }
 
+
         TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         telephony.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
-
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
         edit = pref.edit();
 
@@ -85,24 +90,33 @@ public class callLogs extends BroadcastReceiver {
     }
 
 
-    public void record(){
+/*    private void record(){
 
         recorder = new MediaRecorder();
 
-        recorder.reset();
-        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+       // recorder.reset();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
         recorder.setOutputFile(file);
         try {
             recorder.prepare();
+            recorder.start();
         } catch (java.io.IOException e) {
             recorder = null;
             return;
         }
-        recorder.start();
+
+
+        Log.e("RecordStartHai","haanHai");
 
         Log.e("RecordingKyaHai", file);
+    }*/
+
+    private void stopRecording() {
+        recorder.stop();
+        //   recorder.release();
+        //  recorder = null;
     }
 
     protected void onIncomingCallStarted(String number, Date start) {
@@ -113,18 +127,90 @@ public class callLogs extends BroadcastReceiver {
 
         //Log.d("TimeKyaHaiBhai?",currentTime.toString());
 
+        recorder = new MediaRecorder();
+        audioManager = (AudioManager) savedContext.getSystemService(Context.AUDIO_SERVICE);
+
+        try {
+            File sampleDir = Environment.getExternalStorageDirectory();
+            try {
+                audiofile = File.createTempFile("sound" + System.currentTimeMillis(), ".mp3", sampleDir);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+            recorder.setAudioSamplingRate(8000);
+            recorder.setAudioEncodingBitRate(12200);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            recorder.setOutputFile(audiofile.getAbsolutePath());
+            audioManager.setMode(AudioManager.MODE_IN_CALL);
+            audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
+            recorder.prepare();
+            recorder.start();
+            recordStarted = true;
+
+            TelephonyManager telephony = (TelephonyManager) savedContext.getSystemService(Context.TELEPHONY_SERVICE);
+            telephony.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
+
+
+            // telManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+            // telManager.listen(phoneListener, PhoneStateListener.LISTEN_CALL_STATE);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
     }
 
     protected void onOutgoingCallStarted(String number, Date start) {
 
         //Log.d("outgoing", "Yess");
 
+        recorder = new MediaRecorder();
+
+        try {
+            File sampleDir = Environment.getExternalStorageDirectory();
+            try {
+                audiofile = File.createTempFile("sound" + System.currentTimeMillis(), ".3gp", sampleDir);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            recorder.setOutputFile(audiofile.getAbsolutePath());
+            recorder.prepare();
+            recorder.start();
+            recordStarted = true;
+
+            TelephonyManager telephony = (TelephonyManager) savedContext.getSystemService(Context.TELEPHONY_SERVICE);
+            telephony.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
+
+
+            // telManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+            // telManager.listen(phoneListener, PhoneStateListener.LISTEN_CALL_STATE);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
     protected void onIncomingCallEnded(String number1, Date start, Date end) {
 
-      // recorder.stop();
-      // Log.e("RecordingKyaHai", file);
+        if (recordStarted) {
+            recorder.stop();
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+            recordStarted = false;
+        }
+
+        // stopRecording();
+        Log.e("RecordingKyaHai", String.valueOf(audiofile));
 
         Log.d("IncomingEnd", "ended");
         cd = new ConnectionDetector(savedContext);
@@ -217,7 +303,7 @@ public class callLogs extends BroadcastReceiver {
 
                 DatabaseHelper db = new DatabaseHelper(savedContext);
 
-                Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+                Boolean result = db.insertCalls(phNumber, callDuration, dir, String.valueOf(callDayTime));
 
                 Log.d("gayaDatabaseMai", String.valueOf(result));
 
@@ -301,12 +387,17 @@ public class callLogs extends BroadcastReceiver {
 
         countDownTimer.start();
 
-
     }
 
     protected void onOutgoingCallEnded(String number, Date start, Date end) {
 
+        if (recordStarted) {
+            recorder.stop();
+            recordStarted = false;
+        }
+
         Log.d("outgoingend", "yes");
+        Log.e("RecordingKyaHai", String.valueOf(audiofile));
 
         cd = new ConnectionDetector(savedContext);
 
@@ -393,7 +484,7 @@ public class callLogs extends BroadcastReceiver {
 
                 DatabaseHelper db = new DatabaseHelper(savedContext);
 
-                Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+                Boolean result = db.insertCalls(phNumber, callDuration, dir, String.valueOf(callDayTime));
 
                 Log.d("gayaDatabaseMai", String.valueOf(result));
 
@@ -571,10 +662,9 @@ public class callLogs extends BroadcastReceiver {
 
                 DatabaseHelper db = new DatabaseHelper(savedContext);
 
-                 Boolean result = db.insertCalls(phNumber,callDuration, dir, String.valueOf(callDayTime));
+                Boolean result = db.insertCalls(phNumber, callDuration, dir, String.valueOf(callDayTime));
 
-                 Log.d("gayaDatabaseMai", String.valueOf(result));
-
+                Log.d("gayaDatabaseMai", String.valueOf(result));
 
 
                 sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);

@@ -23,6 +23,24 @@ public class locationBean {
     @SerializedName("address")
     @Expose
     private String address;
+    @SerializedName("battery")
+    @Expose
+    private String battery;
+    @SerializedName("storage_available")
+    @Expose
+    private String storageAvailable;
+    @SerializedName("storage_total")
+    @Expose
+    private String storageTotal;
+    @SerializedName("wifi")
+    @Expose
+    private String wifi;
+    @SerializedName("gps")
+    @Expose
+    private Object gps;
+    @SerializedName("data")
+    @Expose
+    private String data;
 
     public Boolean getSuccess() {
         return success;
@@ -70,5 +88,53 @@ public class locationBean {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getBattery() {
+        return battery;
+    }
+
+    public void setBattery(String battery) {
+        this.battery = battery;
+    }
+
+    public String getStorageAvailable() {
+        return storageAvailable;
+    }
+
+    public void setStorageAvailable(String storageAvailable) {
+        this.storageAvailable = storageAvailable;
+    }
+
+    public String getStorageTotal() {
+        return storageTotal;
+    }
+
+    public void setStorageTotal(String storageTotal) {
+        this.storageTotal = storageTotal;
+    }
+
+    public String getWifi() {
+        return wifi;
+    }
+
+    public void setWifi(String wifi) {
+        this.wifi = wifi;
+    }
+
+    public Object getGps() {
+        return gps;
+    }
+
+    public void setGps(Object gps) {
+        this.gps = gps;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
     }
 }
